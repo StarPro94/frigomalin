@@ -19,6 +19,11 @@
       "nom": "pommes",
       "quantite": "4",
       "zone": "frigo"
+    },
+    {
+      "nom": "poulet",
+      "quantite": "",
+      "zone": "frigo"
     }
   ]
 }
