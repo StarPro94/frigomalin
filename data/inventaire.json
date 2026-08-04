@@ -1,1 +1,9 @@
-{"ingredients": []}
+{
+  "ingredients": [
+    {
+      "nom": "pommes",
+      "quantite": "4",
+      "zone": "frigo"
+    }
+  ]
+}
