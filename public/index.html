@@ -228,10 +228,10 @@ async function ajouter(){
   finally{ _mutex=false; }
 }
 
-async function supprimer(i){
+async function supprimer(nom){
   _mutex = true;
   try{
-    const d = await api("/api/inventaire/"+i, {method:"DELETE"});
+    const d = await api("/api/inventaire/supprimer", j({nom}));
     ETAT.ingredients = d.ingredients || [];
     render(); setSync("ok","🔄 à jour");
   }catch(e){ showErr(e.message); }
@@ -242,11 +242,8 @@ async function vider(){
   if(!confirm("Vider tout l'inventaire partagé ? (affecte aussi l'autre appareil)")) return;
   _mutex = true;
   try{
-    // suppressions une à une de la fin
-    while(ETAT.ingredients.length){
-      const d = await api("/api/inventaire/"+(ETAT.ingredients.length-1), {method:"DELETE"});
-      ETAT.ingredients = d.ingredients || [];
-    }
+    const d = await api("/api/inventaire/vider", j({}));
+    ETAT.ingredients = d.ingredients || [];
     render(); setSync("ok","🔄 à jour");
   }catch(e){ showErr(e.message); }
   finally{ _mutex=false; }
@@ -306,7 +303,7 @@ function render(){
   items.forEach(({ing,i})=>{
     const li = document.createElement("li");
     const tag = ing.zone==="garde-manger" ? '<span class="zone-tag">Placard</span>' : "";
-    li.innerHTML = `<span class="nom">${esc(ing.nom)}</span>${ing.quantite?`<span class="qty">${esc(ing.quantite)}</span>`:""}${tag}<button class="btn-rouge" onclick="supprimer(${i})">✕</button>`;
+    li.innerHTML = `<span class="nom">${esc(ing.nom)}</span>${ing.quantite?`<span class="qty">${esc(ing.quantite)}</span>`:""}${tag}<button class="btn-rouge" onclick='supprimer(${JSON.stringify(ing.nom)})'>✕</button>`;
     list.appendChild(li);
   });
 }

@@ -143,57 +143,68 @@ class handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         body = _read_body(self)
-        nom = str(body.get("nom", "")).strip()
-        if not nom:
-            _send(self, 400, {"error": "nom manquant"})
-            return
-        qty = str(body.get("quantite", "")).strip() or ""
-        zone = body.get("zone") == "garde-manger" and "garde-manger" or "frigo"
-        key = norm(nom)
-
-        def apply(items):
-            for ing in items:
-                if norm(ing.get("nom", "")) == key:
-                    ing["quantite"] = qty or ing.get("quantite", "")
-                    ing["zone"] = zone
-                    return items
-            items.append({"nom": nom, "quantite": qty, "zone": zone})
-            return items
-
-        try:
-            res = update(apply)
-            _send(self, 200, res)
-        except RuntimeError as e:
-            if str(e) == "NO_TOKEN":
-                _send(self, 500, {"error": "GITHUB_TOKEN absent sur Vercel"})
-            else:
-                _send(self, 502, {"error": f"Erreur ajout : {e}"})
-        except Exception as e:
-            _send(self, 502, {"error": f"Erreur ajout : {e}"})
-
-    def do_DELETE(self):
         path = self.path.split("?")[0]
-        try:
-            idx = int(path.rsplit("/", 1)[-1])
-        except ValueError:
-            _send(self, 400, {"error": "index invalide"})
+
+        # --- Suppression par nom ---
+        if path == "/api/inventaire/supprimer":
+            nom = str(body.get("nom", "")).strip()
+            if not nom:
+                _send(self, 400, {"error": "nom manquant"})
+                return
+            key = norm(nom)
+            def apply(items):
+                return [i for i in items if norm(i.get("nom", "")) != key]
+            try:
+                res = update(apply)
+                _send(self, 200, res)
+            except RuntimeError as e:
+                _send(self, 502, {"error": f"Erreur suppression : {e}"})
+            except Exception as e:
+                _send(self, 502, {"error": f"Erreur suppression : {e}"})
             return
 
-        def apply(items):
-            if 0 <= idx < len(items):
-                del items[idx]
-            return items
+        # --- Vider tout ---
+        if path == "/api/inventaire/vider":
+            def apply(items):
+                return []
+            try:
+                res = update(apply)
+                _send(self, 200, res)
+            except RuntimeError as e:
+                _send(self, 502, {"error": f"Erreur vidage : {e}"})
+            except Exception as e:
+                _send(self, 502, {"error": f"Erreur vidage : {e}"})
+            return
 
-        try:
-            res = update(apply)
-            _send(self, 200, res)
-        except RuntimeError as e:
-            if str(e) == "NO_TOKEN":
-                _send(self, 500, {"error": "GITHUB_TOKEN absent sur Vercel"})
-            else:
-                _send(self, 502, {"error": f"Erreur suppression : {e}"})
-        except Exception as e:
-            _send(self, 502, {"error": f"Erreur suppression : {e}"})
+        # --- Ajout / mise à jour (route par défaut /api/inventaire) ---
+        if path == "/api/inventaire":
+            nom = str(body.get("nom", "")).strip()
+            if not nom:
+                _send(self, 400, {"error": "nom manquant"})
+                return
+            qty = str(body.get("quantite", "")).strip() or ""
+            zone = body.get("zone") == "garde-manger" and "garde-manger" or "frigo"
+            key = norm(nom)
+
+            def apply(items):
+                for ing in items:
+                    if norm(ing.get("nom", "")) == key:
+                        ing["quantite"] = qty or ing.get("quantite", "")
+                        ing["zone"] = zone
+                        return items
+                items.append({"nom": nom, "quantite": qty, "zone": zone})
+                return items
+
+            try:
+                res = update(apply)
+                _send(self, 200, res)
+            except RuntimeError as e:
+                _send(self, 502, {"error": f"Erreur ajout : {e}"})
+            except Exception as e:
+                _send(self, 502, {"error": f"Erreur ajout : {e}"})
+            return
+
+        _send(self, 404, {"error": "not found"})
 
     def log_message(self, fmt, *args):
         pass
