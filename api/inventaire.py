@@ -21,7 +21,7 @@ GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
 GITHUB_REPO = os.environ.get("GITHUB_REPO", "StarPro94/frigomalin")
 PATH = "data/inventaire.json"
 API = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{PATH}"
-MAX_RETRY = 5
+MAX_RETRY = 10
 
 
 def _hdr():
