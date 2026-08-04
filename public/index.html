@@ -17,10 +17,16 @@
   }
   header{
     background:linear-gradient(135deg,var(--vert-fonce),var(--vert));
-    color:#fff;padding:22px 20px;text-align:center;
+    color:#fff;padding:22px 20px;text-align:center;position:relative;
   }
   header h1{font-size:1.6rem;letter-spacing:.5px;font-weight:700;}
   header p{opacity:.9;margin-top:4px;font-size:.95rem;}
+  .sync{
+    position:absolute;right:14px;top:14px;font-size:.7rem;background:rgba(255,255,255,.22);
+    padding:3px 9px;border-radius:12px;font-weight:600;
+  }
+  .sync.ok{background:rgba(120,220,140,.35);}
+  .sync.err{background:rgba(230,120,110,.4);}
   .wrap{max-width:720px;margin:0 auto;padding:0 16px;}
   .card{
     background:var(--carte);border:1px solid var(--bord);border-radius:14px;
@@ -100,12 +106,13 @@
 <header>
   <h1>🍳 FrigoMalin</h1>
   <p>« Quoi manger avec ce que j'ai dans le frigo ? »</p>
+  <span class="sync" id="syncBadge">…</span>
 </header>
 
 <div class="wrap">
 
   <section class="card">
-    <h2>🧺 Mon frigo & mes placards <span class="badge" id="compteur">0</span></h2>
+    <h2>🧺 Frigo partagé <span class="badge" id="compteur">0</span></h2>
     <div class="row">
       <input id="nom" type="text" placeholder="Ingrédient (ex : œufs, poulet, tomates…)" autocomplete="off">
       <input id="qty" class="qty" type="text" placeholder="Qté">
@@ -122,7 +129,7 @@
       <button id="tab-tous" onclick="setZone('tous')">Tout</button>
     </div>
     <ul class="ing" id="liste"></ul>
-    <p class="vide hidden" id="videMsg">Rien ici pour l'instant. Ajoute ce que tu as en stock !</p>
+    <p class="vide hidden" id="videMsg">Rien pour l'instant. Ajoute ce que vous avez en stock !</p>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
       <div>
         <button class="tiny" onclick="exporter()">📤 Exporter</button>
@@ -130,7 +137,7 @@
       </div>
       <button class="btn-rouge hidden" id="btnVider" onclick="vider()">Tout vider</button>
     </div>
-    <p class="note" style="text-align:left;margin-top:8px;">💡 Sauvegardé automatiquement sur cet appareil.</p>
+    <p class="note" style="text-align:left;margin-top:8px;">🔄 Partagé automatiquement entre tous les appareils (Patrick &amp; Emeline).</p>
   </section>
 
   <section class="card">
@@ -155,94 +162,101 @@
       </div>
     </div>
     <button class="btn btn-vert btn-plein" id="btnGenerer" onclick="generer()">🍽️ Propose-moi une recette</button>
-    <div class="loading hidden" id="loading"><div class="spinner"></div><div>Le chef réfléchit…</div></div>
+    <div class="loading hidden" id="loading"><div class="spinner"></div><div>Le chef réfléchît…</div></div>
     <div class="recette hidden" id="recette"></div>
     <div class="err hidden" id="err"></div>
   </section>
 
-  <p class="note">Fait pour Patrick & Emeline ❤️</p>
+  <p class="note">Fait pour Patrick &amp; Emeline ❤️</p>
 </div>
 
 <script>
 // -----------------------------------------------------------------
-// État + persistance locale
+// État (inventaire partagé via serveur)
 // -----------------------------------------------------------------
-const LS_ING = "frigomalin_ingredients";
-const LS_UI  = "frigomalin_ui";
+const LS_UI = "frigomalin_ui";
 let ETAT = { ingredients: [], zone: "frigo", mode: "healthy", duree: "moyen" };
-try{ ETAT.ingredients = JSON.parse(localStorage.getItem(LS_ING)||"[]"); }catch(e){}
 try{ const u = JSON.parse(localStorage.getItem(LS_UI)||"{}"); if(u.mode)ETAT.mode=u.mode; if(u.duree)ETAT.duree=u.duree; }catch(e){}
+let _mutex = false; // évite les lectures concurrentes qui casseraient les écritures
 
-function save(){
-  try{ localStorage.setItem(LS_ING, JSON.stringify(ETAT.ingredients)); }catch(e){}
-  try{ localStorage.setItem(LS_UI, JSON.stringify({mode:ETAT.mode,duree:ETAT.duree})); }catch(e){}
+function setSync(cls, txt){
+  const b = document.getElementById("syncBadge");
+  b.className = "sync " + (cls||"");
+  b.textContent = txt;
 }
-function norm(s){ return String(s).toLowerCase().replace("œ","oe").replace("æ","ae").trim(); }
 
 // -----------------------------------------------------------------
-// API (IA uniquement)
+// API
 // -----------------------------------------------------------------
-async function apiRecette(payload){
-  const r = await fetch("/api/recette", {
-    method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(payload)
-  });
+async function api(url, opts){
+  const r = await fetch(url, opts);
   const txt = await r.text();
-  let d; try{ d = JSON.parse(txt); }catch(e){ d = {error: txt}; }
+  let d; try{ d = JSON.parse(txt); }catch(e){ d = {}; }
   if(!r.ok) throw new Error(d.error || ("Erreur " + r.status));
   return d;
 }
+const j = (d)=>({method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(d)});
+const norm = (s)=>String(s).toLowerCase().replace("œ","oe").replace("æ","ae").trim();
 
 // -----------------------------------------------------------------
-// Inventaire (localStorage)
+// Inventaire partagé
 // -----------------------------------------------------------------
-function render(){
-  document.getElementById("compteur").textContent = ETAT.ingredients.length;
-  const list = document.getElementById("liste");
-  const viderBtn = document.getElementById("btnVider");
-  const vide = document.getElementById("videMsg");
-  list.innerHTML = "";
-  if(ETAT.ingredients.length===0){ vide.classList.remove("hidden"); viderBtn.classList.add("hidden"); return; }
-  vide.classList.add("hidden");
-  viderBtn.classList.remove("hidden");
-  const z = ETAT.zone;
-  const items = ETAT.ingredients.map((ing,i)=>({ing,i})).filter(({ing})=> z==="tous" || ing.zone===z);
-  if(items.length===0){ list.innerHTML = '<li style="color:#8a8a8a;font-style:italic;padding:8px;">Aucun ingrédient dans cette zone.</li>'; return; }
-  items.forEach(({ing,i})=>{
-    const li = document.createElement("li");
-    const tag = ing.zone==="garde-manger" ? '<span class="zone-tag">Placard</span>' : "";
-    li.innerHTML = `<span class="nom">${esc(ing.nom)}</span>${ing.quantite?`<span class="qty">${esc(ing.quantite)}</span>`:""}${tag}<button class="btn-rouge" onclick="supprimer(${i})">✕</button>`;
-    list.appendChild(li);
-  });
+async function refresh(){
+  if(_mutex) return;
+  try{
+    const d = await api("/api/inventaire");
+    ETAT.ingredients = d.ingredients || [];
+    render();
+    setSync("ok","🔄 à jour");
+  }catch(e){ setSync("err","⚠️ hors-ligne"); }
 }
-function esc(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 
-function ajouter(){
-  const nomIn = document.getElementById("nom").value.trim();
-  if(!nomIn) return;
+async function ajouter(){
+  const nom = document.getElementById("nom").value.trim();
+  if(!nom) return;
   const qty = document.getElementById("qty").value.trim();
   const zone = document.getElementById("zone").value;
-  const key = norm(nomIn);
-  const found = ETAT.ingredients.find(i=>norm(i.nom)===key);
-  if(found){ found.quantite = qty || found.quantite; found.zone = zone; }
-  else{ ETAT.ingredients.push({nom:nomIn, quantite:qty, zone}); }
-  document.getElementById("nom").value="";
-  document.getElementById("qty").value="";
-  document.getElementById("nom").focus();
-  save(); render();
+  _mutex = true;
+  try{
+    const d = await api("/api/inventaire", j({nom, quantite:qty, zone}));
+    ETAT.ingredients = d.ingredients || [];
+    document.getElementById("nom").value="";
+    document.getElementById("qty").value="";
+    document.getElementById("nom").focus();
+    render(); setSync("ok","🔄 à jour");
+  }catch(e){ showErr("Ajout impossible : " + e.message); setSync("err","⚠️"); }
+  finally{ _mutex=false; }
 }
-function supprimer(i){
-  ETAT.ingredients.splice(i,1); save(); render();
+
+async function supprimer(i){
+  _mutex = true;
+  try{
+    const d = await api("/api/inventaire/"+i, {method:"DELETE"});
+    ETAT.ingredients = d.ingredients || [];
+    render(); setSync("ok","🔄 à jour");
+  }catch(e){ showErr(e.message); }
+  finally{ _mutex=false; }
 }
-function vider(){
-  if(!confirm("Vider tout l'inventaire ?")) return;
-  ETAT.ingredients = []; save(); render();
+
+async function vider(){
+  if(!confirm("Vider tout l'inventaire partagé ? (affecte aussi l'autre appareil)")) return;
+  _mutex = true;
+  try{
+    // suppressions une à une de la fin
+    while(ETAT.ingredients.length){
+      const d = await api("/api/inventaire/"+(ETAT.ingredients.length-1), {method:"DELETE"});
+      ETAT.ingredients = d.ingredients || [];
+    }
+    render(); setSync("ok","🔄 à jour");
+  }catch(e){ showErr(e.message); }
+  finally{ _mutex=false; }
 }
+
 function exporter(){
   const blob = new Blob([JSON.stringify({ingredients:ETAT.ingredients}, null, 2)], {type:"application/json"});
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "frigomalin-inventaire.json";
-  a.click(); URL.revokeObjectURL(a.href);
+  a.href = URL.createObjectURL(blob); a.download = "frigomalin-inventaire.json"; a.click();
+  URL.revokeObjectURL(a.href);
 }
 function importer(ev){
   const f = ev.target.files[0]; if(!f) return;
@@ -253,14 +267,50 @@ function importer(ev){
       const list = Array.isArray(d) ? d : (d.ingredients || []);
       const clean = list.map(i=>({nom:String(i.nom||"").trim(), quantite:String(i.quantite||"").trim(), zone:(i.zone==="garde-manger"?"garde-manger":"frigo")})).filter(i=>i.nom);
       if(!clean.length) throw new Error("liste vide");
-      if(!confirm(`Remplacer l'inventaire par ${clean.length} ingrédient(s) importé(s) ?`)) { ev.target.value=""; return; }
-      ETAT.ingredients = clean; save(); render();
+      if(!confirm(`Importer ${clean.length} ingrédient(s) (s'ajoute au frigo partagé) ?`)){ ev.target.value=""; return; }
+      importerBatch(clean);
     }catch(e){ alert("Fichier d'import invalide."); }
     ev.target.value="";
   };
   rd.readAsText(f);
 }
+async function importerBatch(items){
+  _mutex = true;
+  try{
+    let d = {ingredients: ETAT.ingredients};
+    for(const it of items){
+      d = await api("/api/inventaire", j({nom:it.nom, quantite:it.quantite, zone:it.zone}));
+    }
+    ETAT.ingredients = d.ingredients || [];
+    render(); setSync("ok","🔄 à jour");
+  }catch(e){ showErr("Import : " + e.message); }
+  finally{ _mutex=false; }
+}
+
 document.getElementById("nom").addEventListener("keydown", e=>{ if(e.key==="Enter") ajouter(); });
+
+// -----------------------------------------------------------------
+// Rendu
+// -----------------------------------------------------------------
+function render(){
+  document.getElementById("compteur").textContent = ETAT.ingredients.length;
+  const list = document.getElementById("liste");
+  const viderBtn = document.getElementById("btnVider");
+  const vide = document.getElementById("videMsg");
+  list.innerHTML = "";
+  if(ETAT.ingredients.length===0){ vide.classList.remove("hidden"); viderBtn.classList.add("hidden"); return; }
+  vide.classList.add("hidden"); viderBtn.classList.remove("hidden");
+  const z = ETAT.zone;
+  const items = ETAT.ingredients.map((ing,i)=>({ing,i})).filter(({ing})=> z==="tous" || ing.zone===z);
+  if(items.length===0){ list.innerHTML='<li style="color:#8a8a8a;font-style:italic;padding:8px;">Aucun ingrédient dans cette zone.</li>'; return; }
+  items.forEach(({ing,i})=>{
+    const li = document.createElement("li");
+    const tag = ing.zone==="garde-manger" ? '<span class="zone-tag">Placard</span>' : "";
+    li.innerHTML = `<span class="nom">${esc(ing.nom)}</span>${ing.quantite?`<span class="qty">${esc(ing.quantite)}</span>`:""}${tag}<button class="btn-rouge" onclick="supprimer(${i})">✕</button>`;
+    list.appendChild(li);
+  });
+}
+function esc(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 
 function setZone(z){
   ETAT.zone=z;
@@ -272,17 +322,15 @@ function setZone(z){
 function setMode(m, btn){
   ETAT.mode=m;
   const map={healthy:"#3e7c4f",gourmand:"#c65d3b",gras:"#b8860b",sportif:"#2f6f9f"};
-  document.querySelectorAll("#modeGrid .chip").forEach(c=>{
-    c.style.borderColor=""; c.style.background=""; c.style.color="";
-  });
-  btn.style.borderColor = map[m]; btn.style.background = map[m]; btn.style.color = "#fff";
-  save();
+  document.querySelectorAll("#modeGrid .chip").forEach(c=>{ c.style.borderColor=""; c.style.background=""; c.style.color=""; });
+  btn.style.borderColor=map[m]; btn.style.background=map[m]; btn.style.color="#fff";
+  try{ localStorage.setItem(LS_UI, JSON.stringify({mode:ETAT.mode,duree:ETAT.duree})); }catch(e){}
 }
 function setDuree(d, btn){
   ETAT.duree=d;
   document.querySelectorAll("#dureeRow .chip").forEach(c=>c.classList.remove("actif-duree"));
   btn.classList.add("actif-duree");
-  save();
+  try{ localStorage.setItem(LS_UI, JSON.stringify({mode:ETAT.mode,duree:ETAT.duree})); }catch(e){}
 }
 
 // -----------------------------------------------------------------
@@ -298,8 +346,8 @@ function afficherRecette(r){
       ${r.difficulte?`<span>🔧 ${esc(r.difficulte)}</span>`:""}
       ${r.calories_estimees?`<span>🔥 ${esc(r.calories_estimees)}</span>`:""}
     </div>
-    ${(r.ingredients_dispo_utilises||[]).length?`<h4 class="dispo">✅ Avec ce que tu as</h4><ul class="e">${r.ingredients_dispo_utilises.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
-    ${(r.ingredients_manquants||[]).length?`<h4 class="manq">🛒 Il te faudrait</h4><ul class="e">${r.ingredients_manquants.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+    ${(r.ingredients_dispo_utilises||[]).length?`<h4 class="dispo">✅ Avec ce que vous avez</h4><ul class="e">${r.ingredients_dispo_utilises.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+    ${(r.ingredients_manquants||[]).length?`<h4 class="manq">🛒 Il faudrait</h4><ul class="e">${r.ingredients_manquants.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
     ${(r.etapes||[]).length?`<h4>👨‍🍳 Préparation</h4><ul class="e">${r.etapes.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
     ${r.astuce?`<div class="astuce">💡 ${esc(r.astuce)}</div>`:""}
     <div class="recette-actions"><button class="btn btn-vert" onclick="generer()">🔄 Autre idée</button></div>
@@ -308,8 +356,7 @@ function afficherRecette(r){
 }
 function showErr(msg){
   const e = document.getElementById("err");
-  e.textContent = "⚠️ " + msg;
-  e.classList.remove("hidden");
+  e.textContent = "⚠️ " + msg; e.classList.remove("hidden");
 }
 async function generer(){
   const gen = document.getElementById("btnGenerer");
@@ -320,28 +367,23 @@ async function generer(){
   gen.disabled = true;
   const ingredients = ETAT.ingredients.map(i=>i.nom);
   try{
-    const d = await apiRecette({mode:ETAT.mode, duree:ETAT.duree, ingredients});
+    const d = await api("/api/recette", j({mode:ETAT.mode, duree:ETAT.duree, ingredients}));
     loading.classList.add("hidden");
     afficherRecette(d.recette || d);
   }catch(e){
-    loading.classList.add("hidden");
-    showErr(e.message);
-  }finally{
-    gen.disabled = false;
-  }
+    loading.classList.add("hidden"); showErr(e.message);
+  }finally{ gen.disabled=false; }
 }
 
 // -----------------------------------------------------------------
 // Init
 // -----------------------------------------------------------------
 const map={healthy:"#3e7c4f",gourmand:"#c65d3b",gras:"#b8860b",sportif:"#2f6f9f"};
-document.querySelectorAll("#modeGrid .chip").forEach(c=>{
-  if(c.dataset.mode===ETAT.mode){ c.style.borderColor=map[ETAT.mode]; c.style.background=map[ETAT.mode]; c.style.color="#fff"; }
-});
-document.querySelectorAll("#dureeRow .chip").forEach(c=>{
-  if(c.dataset.duree===ETAT.duree) c.classList.add("actif-duree");
-});
-render();
+document.querySelectorAll("#modeGrid .chip").forEach(c=>{ if(c.dataset.mode===ETAT.mode){ c.style.borderColor=map[ETAT.mode]; c.style.background=map[ETAT.mode]; c.style.color="#fff"; } });
+document.querySelectorAll("#dureeRow .chip").forEach(c=>{ if(c.dataset.duree===ETAT.duree) c.classList.add("actif-duree"); });
+refresh();
+// Re-synchronise toutes les 10 s pour rester à jour entre les 2 appareils
+setInterval(()=>{ if(!_mutex) refresh(); }, 10000);
 </script>
 </body>
 </html>
