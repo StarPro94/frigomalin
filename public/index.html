@@ -119,9 +119,12 @@
   .bottomnav button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;}
   .bottomnav button.cur{color:var(--papier-clair);}
   .bottomnav button.cur::before{content:"";position:absolute;top:0;left:30%;right:30%;height:3px;background:var(--papier-clair);}
-  .sheet{position:fixed;left:0;right:0;bottom:0;background:var(--papier-clair);z-index:50;border-radius:8px 8px 0 0;border:1px solid var(--ligne);box-shadow:0 -6px 24px rgba(0,0,0,.2);padding:20px 18px calc(16px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .22s ease;max-height:85vh;overflow-y:auto;}
+  .sheet{position:fixed;left:0;right:0;bottom:0;background:var(--papier-clair);z-index:60;border-radius:8px 8px 0 0;border:1px solid var(--ligne);box-shadow:0 -6px 24px rgba(0,0,0,.2);padding:20px 18px calc(16px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .22s ease;max-height:85vh;overflow-y:auto;}
   .sheet.open{transform:translateY(0);}
-  .sheet h3{margin-bottom:12px;}
+  .sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .sheet-head h3{margin:0;}
+  .sheet-close{font-family:"Barlow Condensed";border:none;background:none;color:var(--encre-douce);font-size:22px;line-height:1;cursor:pointer;padding:0 6px;}
+  .sheet-close:hover{color:var(--danger);}
   .zone-choix{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0;}
   .zone-choix button{font-family:"Barlow Condensed";text-transform:uppercase;letter-spacing:.04em;font-size:13px;border:1px solid var(--ligne);padding:7px 12px;border-radius:2px;background:transparent;cursor:pointer;color:var(--encre-douce);font-weight:600;}
   .zone-choix button.on{background:var(--persil);border-color:var(--persil);color:var(--papier-clair);}
@@ -415,7 +418,7 @@ function openSheet(which){
   const s=$("sheet"),b=$("sheetBody");
   if(which==="add"){
     appState.zoneAdd="frigo";
-    b.innerHTML=`<h3>Ranger quelque chose</h3>
+    b.innerHTML=`<div class="sheet-head"><h3>Ranger quelque chose</h3><button class="sheet-close" id="sClose" title="Fermer">✕</button></div>
       <div class="ligne-vocal">
         <input class="recherche" id="sNom" placeholder="Ex. champignons, un fond de crème…">
         <button class="mic ${recog()?'':'masque'}" id="btnMic" title="Dicter à la voix">🎙</button>
@@ -426,17 +429,23 @@ function openSheet(which){
     b.querySelectorAll("#zCh button").forEach(bn=>bn.addEventListener("click",()=>{appState.zoneAdd=bn.dataset.z;b.querySelectorAll("#zCh button").forEach(x=>x.classList.remove("on"));bn.classList.add("on");}));
     $("btnValider").addEventListener("click",validerAjout);
     if(recog())$("btnMic").addEventListener("click",dicterAjout);
+    $("sClose").addEventListener("click",fermerSheet);
   }else{
     let m="";["healthy","gourmand","gras","sportif","surprise"].forEach(x=>m+=`<button class="${appState.mode===x?"on":""}" data-m="${x}">${x}</button>`);
     let d="";["rapide","moyen","long"].forEach(x=>d+=`<button class="${appState.duree===x?"on":""}" data-d="${x}">${x}</button>`);
-    b.innerHTML=`<h3>Changer l'envie</h3><b class="cond" style="font-size:13px;">Style</b><div class="zone-choix" id="zM">${m}</div><b class="cond" style="font-size:13px;display:block;margin-top:10px;">Temps</b><div class="zone-choix" id="zD">${d}</div><button class="btn btn-tomate" style="width:100%;margin-top:14px;" id="btnValiderEnvie">Ok, trouvez-nous ça</button>`;
+    b.innerHTML=`<div class="sheet-head"><h3>Changer l'envie</h3><button class="sheet-close" id="sClose" title="Fermer">✕</button></div><b class="cond" style="font-size:13px;">Style</b><div class="zone-choix" id="zM">${m}</div><b class="cond" style="font-size:13px;display:block;margin-top:10px;">Temps</b><div class="zone-choix" id="zD">${d}</div><button class="btn btn-tomate" style="width:100%;margin-top:14px;" id="btnValiderEnvie">Ok, trouvez-nous ça</button>`;
     b.querySelectorAll("#zM button").forEach(bn=>bn.addEventListener("click",()=>{appState.mode=bn.dataset.m;b.querySelectorAll("#zM button").forEach(x=>x.classList.remove("on"));bn.classList.add("on");}));
     b.querySelectorAll("#zD button").forEach(bn=>bn.addEventListener("click",()=>{appState.duree=bn.dataset.d;b.querySelectorAll("#zD button").forEach(x=>x.classList.remove("on"));bn.classList.add("on");}));
     $("btnValiderEnvie").addEventListener("click",()=>{fermerSheet();generer();});
+    $("sClose").addEventListener("click",fermerSheet);
   }
   s.classList.add("open");
+  $("overlay").classList.add("show");
 }
-function fermerSheet(){$("sheet").classList.remove("open");}
+function fermerSheet(){
+  $("sheet").classList.remove("open");
+  if(!$("fiche").classList.contains("open"))$("overlay").classList.remove("show");
+}
 // ---------- Dictée vocale (ajout d'ingrédients à la voix) ----------
 function recog(){return !!(window.SpeechRecognition||window.webkitSpeechRecognition);}
 function dicterAjout(){
@@ -502,7 +511,8 @@ $("btnEnvie").addEventListener("click",()=>openSheet("envie"));
 $("btnRanger").addEventListener("click",()=>openSheet("add"));
 $("btnExport").addEventListener("click",exporter);
 $("importFile").addEventListener("change",importer);
-$("overlay").addEventListener("click",closeFiche);
+$("overlay").addEventListener("click",()=>{closeFiche();fermerSheet();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeFiche();fermerSheet();}});
 
 renderNous();renderReserves();renderToday();renderCarnet();syncUI();
 refresh();
