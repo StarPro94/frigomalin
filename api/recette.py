@@ -15,6 +15,7 @@ La clé DeepSeek est lue depuis l'env Vercel. 100% stdlib.
 import json
 import os
 import re
+import time
 import urllib.request
 import urllib.error
 from http.server import BaseHTTPRequestHandler
@@ -75,6 +76,12 @@ def _read_body(h):
 
 
 def _call(prompt, temperature=0.8):
+    """Appelle DeepSeek avec retry automatique (fiabilité au quotidien).
+
+    On retente jusqu'à 3 fois sur les erreurs transitoires : timeout réseau,
+    erreur de connexion ou réponses 5xx/429 de l'API — les pannes passagères
+    de DeepSeek ne font plus échouer la requête de l'utilisateur.
+    """
     payload = {
         "model": DEEPSEEK_MODEL,
         "messages": [{"role": "system", "content": SYSTEM}, {"role": "user", "content": prompt}],
@@ -87,9 +94,23 @@ def _call(prompt, temperature=0.8):
         headers={"Content-Type": "application/json", "Authorization": "Bearer " + DEEPSEEK_API_KEY},
         method="POST",
     )
-    with urllib.request.urlopen(req, timeout=120) as resp:
-        body = json.loads(resp.read().decode("utf-8"))
-    return body["choices"][0]["message"]["content"]
+    last = None
+    for attempt in range(3):
+        try:
+            with urllib.request.urlopen(req, timeout=120) as resp:
+                body = json.loads(resp.read().decode("utf-8"))
+            return body["choices"][0]["message"]["content"]
+        except urllib.error.HTTPError as e:
+            if e.code in (429, 500, 502, 503, 504):
+                last = e  # surcharge / panne passagère → on retente
+            else:
+                raise  # erreur durable (410, 401…) → on la remonte tout de suite
+        except (urllib.error.URLError, TimeoutError, OSError) as e:
+            # erreur transitoire : réseau coupé, timeout, connexion refusée → on retente
+            last = e
+        if attempt < 2:
+            time.sleep(1 + attempt)  # backoff court : 1s puis 2s
+    raise last if last else Exception("Échec de l'appel DeepSeek")
 
 
 def parse_recette(raw):
