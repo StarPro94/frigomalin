@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FrigoMalin 🍳</title>
+<style>
+  :root{
+    --vert:#3e7c4f; --vert-fonce:#2c5a3a; --creme:#faf6ee; --bois:#a97645;
+    --texte:#2b2b2b; --gris:#8a8a8a; --carte:#ffffff; --bord:#e7dfcf;
+    --gourmand:#c65d3b; --gras:#b8860b; --sportif:#2f6f9f; --healthy:#3e7c4f;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--creme);color:var(--texte);min-height:100vh;padding-bottom:40px;
+  }
+  header{
+    background:linear-gradient(135deg,var(--vert-fonce),var(--vert));
+    color:#fff;padding:22px 20px;text-align:center;
+  }
+  header h1{font-size:1.6rem;letter-spacing:.5px;font-weight:700;}
+  header p{opacity:.9;margin-top:4px;font-size:.95rem;}
+  .wrap{max-width:720px;margin:0 auto;padding:0 16px;}
+  .card{
+    background:var(--carte);border:1px solid var(--bord);border-radius:14px;
+    padding:18px;margin-top:18px;box-shadow:0 1px 4px rgba(0,0,0,.06);
+  }
+  .card h2{font-size:1.1rem;color:var(--vert-fonce);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+  .badge{
+    display:inline-block;background:var(--vert);color:#fff;border-radius:20px;
+    padding:2px 10px;font-size:.72rem;font-weight:600;margin-left:auto;
+  }
+  .row{display:flex;gap:8px;flex-wrap:wrap;}
+  .row input{
+    flex:1;min-width:150px;padding:11px 12px;border:1px solid var(--bord);
+    border-radius:9px;font-size:1rem;background:#fffdf8;
+  }
+  .qty{max-width:110px;}
+  select{
+    padding:11px;border:1px solid var(--bord);border-radius:9px;font-size:.95rem;background:#fffdf8;
+  }
+  .btn{
+    border:none;border-radius:9px;padding:11px 16px;font-size:.95rem;font-weight:600;cursor:pointer;
+    transition:transform .05s, opacity .2s;color:#fff;
+  }
+  .btn:active{transform:scale(.98);}
+  .btn-vert{background:var(--vert);}
+  .btn-vert:hover{opacity:.92;}
+  .btn-plein{width:100%;padding:14px;font-size:1.05rem;margin-top:6px;}
+  .btn-rouge{background:transparent;color:#b04a3a;border:none;font-size:.85rem;cursor:pointer;padding:4px;text-decoration:underline;font-weight:600;}
+  .zone-tab{display:flex;gap:6px;margin-bottom:12px;}
+  .zone-tab button{
+    flex:1;border:1px solid var(--bord);background:#f4eee0;border-radius:9px;
+    padding:8px;font-weight:600;cursor:pointer;font-size:.9rem;color:#5a5346;
+  }
+  .zone-tab button.actif{background:var(--vert);color:#fff;border-color:var(--vert);}
+  ul.ing{list-style:none;}
+  ul.ing li{
+    display:flex;align-items:center;padding:9px 4px;border-bottom:1px dashed var(--bord);
+  }
+  ul.ing li:last-child{border-bottom:none;}
+  ul.ing .nom{flex:1;font-weight:500;}
+  ul.ing .qty{color:var(--gris);font-size:.9rem;margin-right:8px;}
+  ul.ing .zone-tag{font-size:.7rem;background:#eee7d8;border-radius:5px;padding:2px 6px;color:#7a6f5c;margin-right:8px;}
+  .vide{color:var(--gris);text-align:center;padding:14px;font-style:italic;}
+  .modalites{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .modalite label{display:block;font-size:.8rem;color:var(--gris);margin-bottom:5px;font-weight:600;}
+  .mode-grid{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{
+    border:2px solid var(--bord);background:#fff;border-radius:22px;padding:8px 14px;
+    cursor:pointer;font-weight:600;font-size:.9rem;transition:all .15s;color:#555;
+  }
+  .duree-row{display:flex;gap:8px;flex-wrap:wrap;}
+  .duree-row .chip{flex:1;min-width:80px;text-align:center;}
+  .loading{text-align:center;padding:24px;color:var(--vert-fonce);}
+  .spinner{display:inline-block;width:26px;height:26px;border:4px solid var(--bord);border-top-color:var(--vert);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:8px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .recette h3{font-size:1.35rem;color:var(--vert-fonce);}
+  .recette .style{color:var(--gris);font-style:italic;margin:2px 0 10px;}
+  .meta{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 14px;}
+  .meta span{background:#f2ecdd;padding:4px 10px;border-radius:7px;font-size:.82rem;font-weight:600;color:#5a5346;}
+  .recette h4{font-size:.95rem;color:var(--vert-fonce);margin:12px 0 6px;}
+  .dispo{color:var(--healthy);}
+  .manq{color:var(--gourmand);}
+  ul.e{list-style:none;}
+  ul.e li{padding:6px 0 6px 22px;position:relative;line-height:1.45;}
+  ul.e li::before{content:"•";position:absolute;left:6px;color:var(--vert);font-weight:bold;}
+  .astuce{background:#f4f7f0;border-left:3px solid var(--vert);padding:10px 12px;border-radius:6px;margin-top:12px;font-style:italic;color:#41504a;}
+  .err{background:#fbece8;border:1px solid #e8b4a7;color:#8a3b2e;padding:12px;border-radius:9px;margin-top:10px;}
+  .recette-actions{display:flex;gap:8px;margin-top:16px;}
+  .recette-actions .btn{flex:1;}
+  .tiny{font-size:.7rem;background:#f0ead9;border-radius:6px;padding:5px 8px;color:#7a6f5c;border:none;cursor:pointer;font-weight:600;}
+  .note{font-size:.78rem;color:var(--gris);text-align:center;margin-top:22px;line-height:1.5;}
+  .hidden{display:none !important;}
+  @media(max-width:480px){ .modalites{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<header>
+  <h1>🍳 FrigoMalin</h1>
+  <p>« Quoi manger avec ce que j'ai dans le frigo ? »</p>
+</header>
+
+<div class="wrap">
+
+  <section class="card">
+    <h2>🧺 Mon frigo & mes placards <span class="badge" id="compteur">0</span></h2>
+    <div class="row">
+      <input id="nom" type="text" placeholder="Ingrédient (ex : œufs, poulet, tomates…)" autocomplete="off">
+      <input id="qty" class="qty" type="text" placeholder="Qté">
+      <select id="zone">
+        <option value="frigo">Frigo</option>
+        <option value="garde-manger">Garde-manger</option>
+      </select>
+      <button class="btn btn-vert" onclick="ajouter()">Ajouter</button>
+    </div>
+    <div style="height:12px"></div>
+    <div class="zone-tab">
+      <button id="tab-frigo" class="actif" onclick="setZone('frigo')">Frigo</button>
+      <button id="tab-gm" onclick="setZone('garde-manger')">Garde-manger</button>
+      <button id="tab-tous" onclick="setZone('tous')">Tout</button>
+    </div>
+    <ul class="ing" id="liste"></ul>
+    <p class="vide hidden" id="videMsg">Rien ici pour l'instant. Ajoute ce que tu as en stock !</p>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+      <div>
+        <button class="tiny" onclick="exporter()">📤 Exporter</button>
+        <label class="tiny" style="cursor:pointer;">📥 Importer<input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importer(event)"></label>
+      </div>
+      <button class="btn-rouge hidden" id="btnVider" onclick="vider()">Tout vider</button>
+    </div>
+    <p class="note" style="text-align:left;margin-top:8px;">💡 Sauvegardé automatiquement sur cet appareil.</p>
+  </section>
+
+  <section class="card">
+    <h2>✨ J'ai envie de…</h2>
+    <div class="modalites">
+      <div class="modalite">
+        <label>Style</label>
+        <div class="mode-grid" id="modeGrid">
+          <button class="chip" data-mode="healthy" onclick="setMode('healthy',this)">🌿 Healthy</button>
+          <button class="chip" data-mode="gourmand" onclick="setMode('gourmand',this)">😋 Gourmand</button>
+          <button class="chip" data-mode="gras" onclick="setMode('gras',this)">🍟 Gras</button>
+          <button class="chip" data-mode="sportif" onclick="setMode('sportif',this)">💪 Sportif</button>
+        </div>
+      </div>
+      <div class="modalite">
+        <label>Durée de préparation</label>
+        <div class="duree-row" id="dureeRow">
+          <button class="chip actif-duree" data-duree="moyen" onclick="setDuree('moyen',this)">⏱️ Moyen</button>
+          <button class="chip" data-duree="rapide" onclick="setDuree('rapide',this)">⚡ Rapide</button>
+          <button class="chip" data-duree="long" onclick="setDuree('long',this)">🐢 Long</button>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-vert btn-plein" id="btnGenerer" onclick="generer()">🍽️ Propose-moi une recette</button>
+    <div class="loading hidden" id="loading"><div class="spinner"></div><div>Le chef réfléchit…</div></div>
+    <div class="recette hidden" id="recette"></div>
+    <div class="err hidden" id="err"></div>
+  </section>
+
+  <p class="note">Fait pour Patrick & Emeline ❤️</p>
+</div>
+
+<script>
+// -----------------------------------------------------------------
+// État + persistance locale
+// -----------------------------------------------------------------
+const LS_ING = "frigomalin_ingredients";
+const LS_UI  = "frigomalin_ui";
+let ETAT = { ingredients: [], zone: "frigo", mode: "healthy", duree: "moyen" };
+try{ ETAT.ingredients = JSON.parse(localStorage.getItem(LS_ING)||"[]"); }catch(e){}
+try{ const u = JSON.parse(localStorage.getItem(LS_UI)||"{}"); if(u.mode)ETAT.mode=u.mode; if(u.duree)ETAT.duree=u.duree; }catch(e){}
+
+function save(){
+  try{ localStorage.setItem(LS_ING, JSON.stringify(ETAT.ingredients)); }catch(e){}
+  try{ localStorage.setItem(LS_UI, JSON.stringify({mode:ETAT.mode,duree:ETAT.duree})); }catch(e){}
+}
+function norm(s){ return String(s).toLowerCase().replace("œ","oe").replace("æ","ae").trim(); }
+
+// -----------------------------------------------------------------
+// API (IA uniquement)
+// -----------------------------------------------------------------
+async function apiRecette(payload){
+  const r = await fetch("/api/recette", {
+    method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(payload)
+  });
+  const txt = await r.text();
+  let d; try{ d = JSON.parse(txt); }catch(e){ d = {error: txt}; }
+  if(!r.ok) throw new Error(d.error || ("Erreur " + r.status));
+  return d;
+}
+
+// -----------------------------------------------------------------
+// Inventaire (localStorage)
+// -----------------------------------------------------------------
+function render(){
+  document.getElementById("compteur").textContent = ETAT.ingredients.length;
+  const list = document.getElementById("liste");
+  const viderBtn = document.getElementById("btnVider");
+  const vide = document.getElementById("videMsg");
+  list.innerHTML = "";
+  if(ETAT.ingredients.length===0){ vide.classList.remove("hidden"); viderBtn.classList.add("hidden"); return; }
+  vide.classList.add("hidden");
+  viderBtn.classList.remove("hidden");
+  const z = ETAT.zone;
+  const items = ETAT.ingredients.map((ing,i)=>({ing,i})).filter(({ing})=> z==="tous" || ing.zone===z);
+  if(items.length===0){ list.innerHTML = '<li style="color:#8a8a8a;font-style:italic;padding:8px;">Aucun ingrédient dans cette zone.</li>'; return; }
+  items.forEach(({ing,i})=>{
+    const li = document.createElement("li");
+    const tag = ing.zone==="garde-manger" ? '<span class="zone-tag">Placard</span>' : "";
+    li.innerHTML = `<span class="nom">${esc(ing.nom)}</span>${ing.quantite?`<span class="qty">${esc(ing.quantite)}</span>`:""}${tag}<button class="btn-rouge" onclick="supprimer(${i})">✕</button>`;
+    list.appendChild(li);
+  });
+}
+function esc(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+function ajouter(){
+  const nomIn = document.getElementById("nom").value.trim();
+  if(!nomIn) return;
+  const qty = document.getElementById("qty").value.trim();
+  const zone = document.getElementById("zone").value;
+  const key = norm(nomIn);
+  const found = ETAT.ingredients.find(i=>norm(i.nom)===key);
+  if(found){ found.quantite = qty || found.quantite; found.zone = zone; }
+  else{ ETAT.ingredients.push({nom:nomIn, quantite:qty, zone}); }
+  document.getElementById("nom").value="";
+  document.getElementById("qty").value="";
+  document.getElementById("nom").focus();
+  save(); render();
+}
+function supprimer(i){
+  ETAT.ingredients.splice(i,1); save(); render();
+}
+function vider(){
+  if(!confirm("Vider tout l'inventaire ?")) return;
+  ETAT.ingredients = []; save(); render();
+}
+function exporter(){
+  const blob = new Blob([JSON.stringify({ingredients:ETAT.ingredients}, null, 2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "frigomalin-inventaire.json";
+  a.click(); URL.revokeObjectURL(a.href);
+}
+function importer(ev){
+  const f = ev.target.files[0]; if(!f) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    try{
+      const d = JSON.parse(rd.result);
+      const list = Array.isArray(d) ? d : (d.ingredients || []);
+      const clean = list.map(i=>({nom:String(i.nom||"").trim(), quantite:String(i.quantite||"").trim(), zone:(i.zone==="garde-manger"?"garde-manger":"frigo")})).filter(i=>i.nom);
+      if(!clean.length) throw new Error("liste vide");
+      if(!confirm(`Remplacer l'inventaire par ${clean.length} ingrédient(s) importé(s) ?`)) { ev.target.value=""; return; }
+      ETAT.ingredients = clean; save(); render();
+    }catch(e){ alert("Fichier d'import invalide."); }
+    ev.target.value="";
+  };
+  rd.readAsText(f);
+}
+document.getElementById("nom").addEventListener("keydown", e=>{ if(e.key==="Enter") ajouter(); });
+
+function setZone(z){
+  ETAT.zone=z;
+  document.getElementById("tab-frigo").classList.toggle("actif",z==="frigo");
+  document.getElementById("tab-gm").classList.toggle("actif",z==="garde-manger");
+  document.getElementById("tab-tous").classList.toggle("actif",z==="tous");
+  render();
+}
+function setMode(m, btn){
+  ETAT.mode=m;
+  const map={healthy:"#3e7c4f",gourmand:"#c65d3b",gras:"#b8860b",sportif:"#2f6f9f"};
+  document.querySelectorAll("#modeGrid .chip").forEach(c=>{
+    c.style.borderColor=""; c.style.background=""; c.style.color="";
+  });
+  btn.style.borderColor = map[m]; btn.style.background = map[m]; btn.style.color = "#fff";
+  save();
+}
+function setDuree(d, btn){
+  ETAT.duree=d;
+  document.querySelectorAll("#dureeRow .chip").forEach(c=>c.classList.remove("actif-duree"));
+  btn.classList.add("actif-duree");
+  save();
+}
+
+// -----------------------------------------------------------------
+// Génération IA
+// -----------------------------------------------------------------
+function afficherRecette(r){
+  const box = document.getElementById("recette");
+  box.innerHTML = `
+    <h3>${esc(r.titre||"Recette")}</h3>
+    ${r.style?`<div class="style">${esc(r.style)}</div>`:""}
+    <div class="meta">
+      ${r.temps?`<span>⏱️ ${esc(r.temps)}</span>`:""}
+      ${r.difficulte?`<span>🔧 ${esc(r.difficulte)}</span>`:""}
+      ${r.calories_estimees?`<span>🔥 ${esc(r.calories_estimees)}</span>`:""}
+    </div>
+    ${(r.ingredients_dispo_utilises||[]).length?`<h4 class="dispo">✅ Avec ce que tu as</h4><ul class="e">${r.ingredients_dispo_utilises.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+    ${(r.ingredients_manquants||[]).length?`<h4 class="manq">🛒 Il te faudrait</h4><ul class="e">${r.ingredients_manquants.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+    ${(r.etapes||[]).length?`<h4>👨‍🍳 Préparation</h4><ul class="e">${r.etapes.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+    ${r.astuce?`<div class="astuce">💡 ${esc(r.astuce)}</div>`:""}
+    <div class="recette-actions"><button class="btn btn-vert" onclick="generer()">🔄 Autre idée</button></div>
+  `;
+  box.classList.remove("hidden");
+}
+function showErr(msg){
+  const e = document.getElementById("err");
+  e.textContent = "⚠️ " + msg;
+  e.classList.remove("hidden");
+}
+async function generer(){
+  const gen = document.getElementById("btnGenerer");
+  const loading = document.getElementById("loading");
+  const recette = document.getElementById("recette");
+  const err = document.getElementById("err");
+  err.classList.add("hidden"); recette.classList.add("hidden"); loading.classList.remove("hidden");
+  gen.disabled = true;
+  const ingredients = ETAT.ingredients.map(i=>i.nom);
+  try{
+    const d = await apiRecette({mode:ETAT.mode, duree:ETAT.duree, ingredients});
+    loading.classList.add("hidden");
+    afficherRecette(d.recette || d);
+  }catch(e){
+    loading.classList.add("hidden");
+    showErr(e.message);
+  }finally{
+    gen.disabled = false;
+  }
+}
+
+// -----------------------------------------------------------------
+// Init
+// -----------------------------------------------------------------
+const map={healthy:"#3e7c4f",gourmand:"#c65d3b",gras:"#b8860b",sportif:"#2f6f9f"};
+document.querySelectorAll("#modeGrid .chip").forEach(c=>{
+  if(c.dataset.mode===ETAT.mode){ c.style.borderColor=map[ETAT.mode]; c.style.background=map[ETAT.mode]; c.style.color="#fff"; }
+});
+document.querySelectorAll("#dureeRow .chip").forEach(c=>{
+  if(c.dataset.duree===ETAT.duree) c.classList.add("actif-duree");
+});
+render();
+</script>
+</body>
+</html>

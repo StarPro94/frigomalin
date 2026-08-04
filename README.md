@@ -1,0 +1,45 @@
+# FrigoMalin 🍳
+
+**« Quoi manger avec ce que j'ai dans le frigo ? »** — app web pour Patrick & Emeline, accessible au tel comme au PC.
+
+## Fonctionnalités
+- 📝 **Inventaire** du frigo / garde-manger, **sauvegardé automatiquement** (localStorage du navigateur → tu ne retapes jamais).
+- ✨ **Recettes par IA (DeepSeek)** selon les ingrédients dispo, le **style** (🌿 Healthy / 😋 Gourmand / 🍟 Gras / 💪 Sportif) et la **durée** (⚡ Rapide / ⏱️ Moyen / 🐢 Long).
+- 📤📥 **Export / Import** de l'inventaire (transfert entre appareils).
+- 🔒 Clé DeepSeek **côté serveur** (variable d'environnement Vercel), jamais exposée.
+
+## Stack
+- **Frontend** : `public/index.html` (HTML/CSS/JS pur, zéro dépendance) — inventaire en localStorage.
+- **Backend** : `api/recette.py` — fonction serverless Vercel (Python, 100% stdlib) qui appelle DeepSeek.
+- **Hébergement** : Vercel (frontend statique + fonction serverless).
+
+## Déploiement
+Projet Vercel + GitHub. La clé doit être définie en variable d'environnement sur Vercel :
+```
+DEEPSEEK_API_KEY=sk-xxx
+```
+
+## Structure
+```
+frigo-malin/
+├── vercel.json       # config Vercel (clean URLs)
+├── api/recette.py    # fonction serverless : génération de recette DeepSeek
+├── public/index.html # interface (inventaire localStorage + appel /api/recette)
+├── README.md
+└── CHANGELOG.md
+```
+
+## Endpoint
+| Route | Méthode | Rôle |
+|---|---|---|
+| `/` | GET | Interface |
+| `/api/recette` | POST | `{mode, duree, ingredients}` → recette IA |
+
+## Roadmap (améliorations continues)
+- [x] Export / import inventaire
+- [ ] Vrai stockage partagé (base de données) pour frigo commun temps réel
+- [ ] Multi-profils (Patrick / Emeline)
+- [ ] Suggestion qui évite les ingrédients presque périmés
+- [ ] Mode « je n'ai envie de rien » → surprise
+
+_Le projet évolue automatiquement (cron d'amélioration continue)._

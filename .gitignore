@@ -1,0 +1,15 @@
+# Clés et secrets — JAMAIS commités
+.env
+.env.*
+*.pem
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Divers
+.DS_Store
+node_modules/
+.vercel/
