@@ -9,9 +9,11 @@
 - 🔒 Clé DeepSeek **côté serveur** (variable d'environnement Vercel), jamais exposée.
 
 ## Stack
-- **Frontend** : `public/index.html` (HTML/CSS/JS pur, zéro dépendance) — inventaire en localStorage.
-- **Backend** : `api/recette.py` — fonction serverless Vercel (Python, 100% stdlib) qui appelle DeepSeek.
-- **Hébergement** : Vercel (frontend statique + fonction serverless).
+- **Frontend** : `public/index.html` (HTML/CSS/JS pur, zéro dépendance).
+- **Backend** : `api/recette.py` (DeepSeek) + `api/inventaire.py` (stockage partagé).
+- **Stockage partagé** : **Vercel KV (Upstash Redis)** — opérations atomiques (`RPUSH`/`LREM`/`DEL`) → MÊME frigo sur tous les appareils, aucune donnée perdue même en écriture simultanée.
+- **IA** : DeepSeek (clé en variable d'environnement Vercel, jamais exposée).
+- **Hébergement** : Vercel.
 
 ## Déploiement
 Projet Vercel + GitHub. La clé doit être définie en variable d'environnement sur Vercel :
@@ -37,7 +39,7 @@ frigo-malin/
 
 ## Roadmap (améliorations continues)
 - [x] Export / import inventaire
-- [ ] Vrai stockage partagé (base de données) pour frigo commun temps réel
+- [x] **Stockage partagé Redis** (même frigo sur tous les appareils, atomique, aucune perte) — V2
 - [ ] Multi-profils (Patrick / Emeline)
 - [ ] Suggestion qui évite les ingrédients presque périmés
 - [ ] Mode « je n'ai envie de rien » → surprise
