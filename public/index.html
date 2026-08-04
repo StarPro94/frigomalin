@@ -150,6 +150,7 @@
           <button class="chip" data-mode="gourmand" onclick="setMode('gourmand',this)">😋 Gourmand</button>
           <button class="chip" data-mode="gras" onclick="setMode('gras',this)">🍟 Gras</button>
           <button class="chip" data-mode="sportif" onclick="setMode('sportif',this)">💪 Sportif</button>
+          <button class="chip" data-mode="surprise" onclick="setMode('surprise',this)">🎲 Surprise</button>
         </div>
       </div>
       <div class="modalite">
@@ -318,7 +319,10 @@ function setZone(z){
 }
 function setMode(m, btn){
   ETAT.mode=m;
-  const map={healthy:"#3e7c4f",gourmand:"#c65d3b",gras:"#b8860b",sportif:"#2f6f9f"};
+  const map={healthy:"#3e7c4f",gourmand:"#c65d3b",gras:"#b8860b",sportif:"#2f6f9f",surprise:"#7b3fa0"};
+  if(m==="surprise"){
+    document.querySelectorAll("#dureeRow .chip").forEach(c=>c.classList.remove("actif-duree"));
+  }
   document.querySelectorAll("#modeGrid .chip").forEach(c=>{ c.style.borderColor=""; c.style.background=""; c.style.color=""; });
   btn.style.borderColor=map[m]; btn.style.background=map[m]; btn.style.color="#fff";
   try{ localStorage.setItem(LS_UI, JSON.stringify({mode:ETAT.mode,duree:ETAT.duree})); }catch(e){}
@@ -375,7 +379,7 @@ async function generer(){
 // -----------------------------------------------------------------
 // Init
 // -----------------------------------------------------------------
-const map={healthy:"#3e7c4f",gourmand:"#c65d3b",gras:"#b8860b",sportif:"#2f6f9f"};
+const map={healthy:"#3e7c4f",gourmand:"#c65d3b",gras:"#b8860b",sportif:"#2f6f9f",surprise:"#7b3fa0"};
 document.querySelectorAll("#modeGrid .chip").forEach(c=>{ if(c.dataset.mode===ETAT.mode){ c.style.borderColor=map[ETAT.mode]; c.style.background=map[ETAT.mode]; c.style.color="#fff"; } });
 document.querySelectorAll("#dureeRow .chip").forEach(c=>{ if(c.dataset.duree===ETAT.duree) c.classList.add("actif-duree"); });
 refresh();

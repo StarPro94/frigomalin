@@ -9,6 +9,7 @@ les variables d'environnement Vercel (jamais exposée au navigateur).
 """
 import json
 import os
+import random
 import urllib.request
 import urllib.error
 from http.server import BaseHTTPRequestHandler
@@ -47,11 +48,34 @@ def _read_body(handler):
 
 def build_prompt(ingredients, mode, duration):
     dispo = ", ".join(ingredients) if ingredients else "AUCUN (propose un plat à partir de rien / bases de placard classiques)"
-    return f"""
-Contexte : je dois cuisiner avec ce que j'ai. Ingrédients disponibles : {dispo}.
 
-Style souhaité : {MODES.get(mode, MODES['gourmand'])}.
-Temps de préparation souhaité : {DURATIONS.get(duration, DURATIONS['moyen'])}.
+    if mode == "surprise":
+        # Mode « je n'ai envie de rien » : on laisse le hasard décider le style
+        # et la durée, et on pousse l'IA à surprendre à chaque appel.
+        style_opts = list(MODES.values())
+        duree_opts = list(DURATIONS.values())
+        style = random.choice(style_opts)
+        duree = random.choice(duree_opts)
+        astuce_hasard = random.choice([
+            "fais preuve d'originalité et de créativité (cuisine inattendue, twist surprenant).",
+            "propose un plat réconfortant mais avec une touche inattendue.",
+            "surprends avec une association d'ingrédients étonnante mais délicieuse.",
+            "propose un grand classique revisité de façon surprenante.",
+        ])
+        contexte = (
+            f"Ingrédients disponibles : {dispo}. "
+            f"Surprise : choisis un style parmi {style} et une durée parmi {duree}. "
+            f"Tu décides de tout, mais {astuce_hasard}"
+        )
+    else:
+        contexte = (
+            f"Ingrédients disponibles : {dispo}. "
+            f"Style souhaité : {MODES.get(mode, MODES['gourmand'])}. "
+            f"Temps de préparation souhaité : {DURATIONS.get(duration, DURATIONS['moyen'])}."
+        )
+
+    return f"""
+Contexte : je dois cuisiner avec ce que j'ai. {contexte}
 
 Réponds en JSON avec EXACTEMENT cette structure (pas de markdown, pas de texte autour) :
 {{

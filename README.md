@@ -4,7 +4,7 @@
 
 ## Fonctionnalités
 - 📝 **Inventaire** du frigo / garde-manger, **sauvegardé automatiquement** (localStorage du navigateur → tu ne retapes jamais).
-- ✨ **Recettes par IA (DeepSeek)** selon les ingrédients dispo, le **style** (🌿 Healthy / 😋 Gourmand / 🍟 Gras / 💪 Sportif) et la **durée** (⚡ Rapide / ⏱️ Moyen / 🐢 Long).
+- ✨ **Recettes par IA (DeepSeek)** selon les ingrédients dispo, le **style** (🌿 Healthy / 😋 Gourmand / 🍟 Gras / 💪 Sportif / 🎲 Surprise) et la **durée** (⚡ Rapide / ⏱️ Moyen / 🐢 Long).
 - 📤📥 **Export / Import** de l'inventaire (transfert entre appareils).
 - 🔒 Clé DeepSeek **côté serveur** (variable d'environnement Vercel), jamais exposée.
 
@@ -40,8 +40,8 @@ frigo-malin/
 ## Roadmap (améliorations continues)
 - [x] Export / import inventaire
 - [x] **Stockage partagé Redis** (même frigo sur tous les appareils, atomique, aucune perte) — V2
+- [x] **Mode « Surprise »** (je n'ai envie de rien → le chef choisit tout) — V1.2
 - [ ] Multi-profils (Patrick / Emeline)
 - [ ] Suggestion qui évite les ingrédients presque périmés
-- [ ] Mode « je n'ai envie de rien » → surprise
 
 _Le projet évolue automatiquement (cron d'amélioration continue)._
