@@ -1,5 +1,9 @@
 # CHANGELOG — FrigoMalin
 
+## V3.12 (2026-08-04) — Tri urgent dans le filtre Péremption
+- Réserves : dans le filtre « ⚠️ Péremption », les ingrédients s'affichent désormais par ordre d'urgence (périmés d'abord, puis « à consommer », puis par date limite) au lieu de l'ordre alphabétique — on voit en un coup d'œil ce qu'il faut cuisiner en priorité.
+- 2026-08-04 19:57 — Tri par urgence dans le filtre Péremption + déploiement Vercel.
+
 ## V3.11 (2026-08-04) — Favoris de recettes ❤️
 - Nouveau : bouton **« ❤️ Mettre en favori »** directement dans la fiche recette pour marquer un plat qu'on adore.
 - Dans **Le carnet**, filtre **« ❤️ Favoris »** pour ne voir que les plats en favori ; chaque plat gardé a un bouton ♥/💔 pour l'ajouter/retirer, et un ♥ s'affiche à côté du titre. Les favoris sont enregistrés dans le navigateur.

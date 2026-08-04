@@ -375,7 +375,15 @@ function renderReserves(){
   if(appState.filtre==="low")items=items.filter(i=>low.test(i.quantite||""));
   if(appState.filtre==="per")items=items.filter(i=>peremptionStat(i));
   if(!items.length){box.innerHTML=`<div class="vide">${q?"Rien de ce nom.":"Rien par ici."}</div>`;return;}
-  items.sort((a,b)=>a.nom.localeCompare(b.nom,"fr"));
+  // Tri intelligent : dans le filtre Péremption, d'abord ce qui presse (périmé puis à consommer),
+  // puis par date limite, au lieu de l'ordre alphabétique — on voit en premier ce qu'il faut cuisiner.
+  if(appState.filtre==="per"){
+    const urgence=i=>{const s=peremptionStat(i);return s==="expire"?2:(s==="vite"?1:0);};
+    const jour=i=>{const d=(i.date_peremption||"").trim();const t=Date.parse(d+"T00:00:00");return isNaN(t)?Infinity:t;};
+    items.sort((a,b)=>(urgence(b)-urgence(a))||(jour(a)-jour(b)));
+  }else{
+    items.sort((a,b)=>a.nom.localeCompare(b.nom,"fr"));
+  }
   items.forEach(i=>{
     const li=document.createElement("div");li.className="ligne-res";
     const nb=document.createElement("span");nb.className="n";nb.textContent=i.nom;
