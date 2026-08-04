@@ -1,5 +1,9 @@
 # CHANGELOG — FrigoMalin
 
+## V3.8 (2026-08-04) — Thème jour/nuit mémorisé
+- Frontend : le choix du thème Jour/Nuit est désormais **enregistré** (localStorage) et rétabli automatiquement au prochain chargement — plus besoin de re-cliquer sur ☾ à chaque visite. S'applique dès l'ouverture de l'app.
+- 2026-08-04 — Thème jour/nuit persistant + déploiement Vercel.
+
 ## V3.7 (2026-08-04) — Mode Surprise explicite + parsing robuste
 - Backend : le mode **Surprise** (« je n'ai envie de rien ») est désormais un mode à part entière côté serveur — le chef reçoit une consigne « créatif et original, aucune contrainte de style » au lieu d'aucune instruction.
 - Backend : parsing JSON plus robuste — gère les blocs markdown ```json``` autour de la réponse et détecte proprement les réponses vides/malformées.

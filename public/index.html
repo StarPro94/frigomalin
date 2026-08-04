@@ -277,8 +277,8 @@
 
 <script>
 // ---------- État ----------
-const LS_C="office_carnet",LS_U="office_user";
-const appState={view:"today",user:localStorage.getItem(LS_U)||"patrick",theme:"day",inventory:[],zone:"frigo",filtre:"tous",
+const LS_C="office_carnet",LS_U="office_user",LS_T="office_theme";
+const appState={view:"today",user:localStorage.getItem(LS_U)||"patrick",theme:localStorage.getItem(LS_T)==="night"?"night":"day",inventory:[],zone:"frigo",filtre:"tous",
   mode:"gourmand",duree_max:20,difficulte_max:"facile",parts:2,excl:[],
   suggestion:null,carnet:JSON.parse(localStorage.getItem(LS_C)||"[]"),timer:null,recogOn:null,chatMsgs:[],_recetteChat:null,carnetQ:"",
   bases:[
@@ -309,7 +309,8 @@ function navigate(v){
   (v==="today")&&renderToday();(v==="reserves")&&renderReserves();(v==="carnet")&&renderCarnet();(v==="nous")&&renderNous();
 }
 function setUser(u){appState.user=u;saveUser();$("chipP").classList.toggle("cur",u==="patrick");$("chipE").classList.toggle("cur",u==="emeline");renderNous();renderToday();}
-function toggleTheme(){appState.theme=appState.theme==="day"?"night":"day";document.body.dataset.theme=appState.theme;$("themeBtn").textContent=appState.theme==="day"?"☾":"☀";}
+function toggleTheme(){appState.theme=appState.theme==="day"?"night":"day";applyTheme();localStorage.setItem(LS_T,appState.theme);}
+function applyTheme(){document.body.dataset.theme=appState.theme;$("themeBtn").textContent=appState.theme==="day"?"☾":"☀";}
 function syncUI(){const b=$("syncRailBox");b.textContent=navigator.onLine?"· à jour":"· hors-ligne";b.style.color=navigator.onLine?"":"var(--tomate)";}
 
 // ---------- Inventaire ----------
@@ -608,6 +609,7 @@ $("importFile").addEventListener("change",importer);
 $("overlay").addEventListener("click",()=>{closeFiche();fermerSheet();});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeFiche();fermerSheet();}});
 
+applyTheme();
 renderNous();renderReserves();renderToday();renderCarnet();syncUI();
 refresh();
 setInterval(()=>{if(!_mutex)refresh();},12000);
