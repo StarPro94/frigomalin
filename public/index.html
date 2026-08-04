@@ -56,7 +56,11 @@
   #aSauver{list-style:none;}
   #aSauver li{padding:7px 2px;border-bottom:1px dashed var(--ligne);font-size:14px;display:flex;align-items:center;gap:8px;}
   #aSauver li:last-child{border-bottom:none;}
-  #aSauver .tag{font-family:"Barlow Condensed";font-size:10px;color:var(--moutarde);text-transform:uppercase;border:1px solid var(--moutarde);padding:1px 6px;border-radius:2px;margin-left:auto;}
+  #aSauver .tag{font-family:"Barlow Condensed";font-size:10px;color:var(--moutarde);text-transform:uppercase;border:1px solid var(--moutarde);padding:1px 6px;border-radius:2px;margin-left:auto;white-space:nowrap;}
+  #aSauver .tag.per-expire{color:var(--danger);border-color:var(--danger);}
+  .ligne-res .tag{font-family:"Barlow Condensed";font-size:10px;text-transform:uppercase;padding:1px 6px;border-radius:2px;margin-left:auto;white-space:nowrap;}
+  .tag.per-vite{color:var(--moutarde);border:1px solid var(--moutarde);}
+  .tag.per-expire{color:var(--danger);border:1px solid var(--danger);}
   /* ---- contraintes (envie) ---- */
   .bloc-contrainte{margin-bottom:12px;}
   .bloc-contrainte .lab{font-family:"Barlow Condensed";text-transform:uppercase;letter-spacing:.05em;font-size:12px;color:var(--bois);font-weight:700;margin-bottom:6px;}
@@ -313,9 +317,17 @@ async function refresh(){
   try{const d=await api("/api/inventaire");appState.inventory=d.ingredients||[];renderReserves();renderToday();syncUI();}
   catch(e){syncUI();}
 }
-async function apiAjouter(nom,qte,zone){_mutex=true;try{const d=await api("/api/inventaire",j({action:"ajouter",nom,quantite:qte,zone}));appState.inventory=d.ingredients||[];return true;}catch(e){return false;}finally{_mutex=false;syncUI();renderReserves();renderToday();}}
+async function apiAjouter(nom,qte,zone,per){_mutex=true;try{const d=await api("/api/inventaire",j({action:"ajouter",nom,quantite:qte,zone,date_peremption:per||null}));appState.inventory=d.ingredients||[];return true;}catch(e){return false;}finally{_mutex=false;syncUI();renderReserves();renderToday();}}
 async function apiSupprimer(nom){_mutex=true;try{const d=await api("/api/inventaire",j({action:"supprimer",nom}));appState.inventory=d.ingredients||[];}catch(e){}finally{_mutex=false;syncUI();renderReserves();renderToday();}}
 function comptes(){const r={};appState.inventory.forEach(i=>r[i.zone]=(r[i.zone]||0)+1);return r;}
+// Péremption : renvoie "expire" (périmé), "vite" (dans <=2j) ou null (ok/pas de date)
+function peremptionStat(i){
+  const d=(i.date_peremption||"").trim();if(!d)return null;
+  const t=Date.parse(d+"T00:00:00");if(isNaN(t))return null;
+  const jours=Math.floor((t-Date.now())/86400000);
+  if(jours<0)return "expire"; if(jours<=2)return "vite"; return null;
+}
+function perLabel(s){return s==="expire"?"périmé":(s==="vite"?"à consommer":"")}
 
 // ---------- Ce soir ----------
 function renderToday(){
@@ -323,8 +335,14 @@ function renderToday(){
   const box=$("aSauver");box.innerHTML="";
   const low=/fond|vide|peu|entam|½/i;
   const vides=appState.inventory.filter(i=>low.test(i.quantite||""));
+  const urgence=appState.inventory.filter(i=>peremptionStat(i));
+  const bloqueExpire=urgence.filter(i=>peremptionStat(i)==="expire");
+  if(bloqueExpire.length){
+    const li=document.createElement("li");li.innerHTML=`<span>⚠️ ${esc(bloqueExpire.slice(0,2).map(i=>i.nom).join(", "))}${bloqueExpire.length>2?"…":""} périmé${bloqueExpire.length>1?"s":""}</span><span class="tag per-expire">à jeter</span>`;
+    box.appendChild(li);
+  }
   if(vides.length){vides.slice(0,3).forEach(i=>{const li=document.createElement("li");li.innerHTML=`<span>${esc(i.nom)}</span><span class="tag">à finir</span>`;box.appendChild(li);});}
-  else{box.innerHTML='<li style="border:none;font-style:italic;">Rien d\'urgent. On est tranquilles.</li>';}
+  else if(!bloqueExpire.length){box.innerHTML='<li style="border:none;font-style:italic;">Rien d\'urgent. On est tranquilles.</li>';}
 }
 async function generer(){
   $("platTitre").textContent="Je regarde ce qu'il reste…";$("platMetas").innerHTML="";$("platJustif").textContent="";
@@ -359,7 +377,9 @@ function renderReserves(){
     const qb=document.createElement("span");qb.className="q";qb.textContent=i.quantite||"";
     const mb=document.createElement("button");mb.className="menu-btn";mb.textContent="⋯";
     mb.addEventListener("click",e=>{e.stopPropagation();ouvreMenuIng(e,i);});
-    li.appendChild(nb);if(i.quantite)li.appendChild(qb);li.appendChild(mb);
+    li.appendChild(nb);if(i.quantite)li.appendChild(qb);
+    const ps=peremptionStat(i);if(ps){const bd=document.createElement("span");bd.className="tag per-"+ps;bd.textContent=perLabel(ps);li.appendChild(bd);}
+    li.appendChild(mb);
     box.appendChild(li);
   });
 }
@@ -497,6 +517,7 @@ function openSheet(which){
         <button class="mic ${recog()?'':'masque'}" id="btnMic" title="Dicter">🎙</button>
       </div>
       <input class="recherche" id="sQte" placeholder="Il en reste combien ? (2, un fond, ½ paquet)">
+      <input class="recherche" id="sPer" type="date" title="À consommer avant (facultatif)">
       <div class="zone-choix" id="zCh"><button class="on" data-z="frigo">Frigo</button><button data-z="garde-manger">Placard</button><button data-z="congelateur">Congélo</button></div>
       <button class="btn btn-tomate" style="width:100%;" id="btnValider">C'est rangé</button>`;
     b.querySelectorAll("#zCh button").forEach(bn=>bn.addEventListener("click",()=>{appState.zoneAdd=bn.dataset.z;b.querySelectorAll("#zCh button").forEach(x=>x.classList.remove("on"));bn.classList.add("on");}));
@@ -523,6 +544,7 @@ function openSheet(which){
     b.innerHTML=`<div class="sheet-head"><h3>Modifier un ingrédient</h3><button class="sheet-close" id="sClose">✕</button></div>
       <input class="recherche" id="iNom" placeholder="Nom" value="${esc(ing.nom)}">
       <input class="recherche" id="iQte" placeholder="Quantité / état" value="${esc(ing.quantite||"")}">
+      <input class="recherche" id="iPer" type="date" title="À consommer avant" value="${esc(ing.date_peremption||"")}">
       <div class="zone-choix" id="zCh"><button class="${ing.zone==="frigo"?"on":""}" data-z="frigo">Frigo</button><button class="${ing.zone==="garde-manger"?"on":""}" data-z="garde-manger">Placard</button><button class="${ing.zone==="congelateur"?"on":""}" data-z="congelateur">Congélo</button></div>
       <button class="btn btn-tomate" style="width:100%;" id="btnValiderIng">Enregistrer</button>`;
     let z=ing.zone;
@@ -531,7 +553,7 @@ function openSheet(which){
       const nom=$("iNom").value.trim();if(!nom)return;
       // supprime l'ancien puis ajoute le nouveau (géré côté api par dédoublonnage)
       await apiSupprimer(ing.nom);
-      await apiAjouter(nom,$("iQte").value.trim(),z);
+      await apiAjouter(nom,$("iQte").value.trim(),z,$("iPer").value.trim()||null);
       fermerSheet();
     });
     $("sClose").addEventListener("click",fermerSheet);
@@ -543,7 +565,8 @@ function fermerSheet(){$("sheet").classList.remove("open");if(!$("fiche").classL
 async function validerAjout(){
   const nom=$("sNom").value.trim();if(!nom)return;
   const qte=$("sQte").value.trim();
-  const ok=await apiAjouter(nom,qte,appState.zoneAdd);
+  const per=$("sPer").value.trim()||null;
+  const ok=await apiAjouter(nom,qte,appState.zoneAdd,per);
   if(ok){fermerSheet();renderReserves();renderToday();}else alert("Impossible de ranger.");
 }
 // ---------- Export / import ----------

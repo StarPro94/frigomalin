@@ -96,6 +96,8 @@ def _add(ing):
         if norm(it.get("nom", "")) == key:
             it["quantite"] = ing["quantite"] or it.get("quantite", "")
             it["zone"] = ing["zone"]
+            if ing.get("date_peremption") is not None:
+                it["date_peremption"] = ing.get("date_peremption")
             replaced = True
             break
     if not replaced:
@@ -163,6 +165,7 @@ class handler(BaseHTTPRequestHandler):
                     "nom": nom,
                     "quantite": str(body.get("quantite", "")).strip() or "",
                     "zone": body.get("zone") if body.get("zone") in ("frigo", "garde-manger", "congelateur") else "frigo",
+                    "date_peremption": str(body.get("date_peremption", "")).strip() or None,
                 }
                 _send(self, 200, {"ingredients": _add(ing)})
             elif action == "supprimer":
