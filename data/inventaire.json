@@ -4,6 +4,11 @@
       "nom": "tomates",
       "quantite": "1",
       "zone": "frigo"
+    },
+    {
+      "nom": "poulet",
+      "quantite": "1",
+      "zone": "frigo"
     }
   ]
 }
