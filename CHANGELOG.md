@@ -1,5 +1,10 @@
 # CHANGELOG — FrigoMalin
 
+## V3.7 (2026-08-04) — Mode Surprise explicite + parsing robuste
+- Backend : le mode **Surprise** (« je n'ai envie de rien ») est désormais un mode à part entière côté serveur — le chef reçoit une consigne « créatif et original, aucune contrainte de style » au lieu d'aucune instruction.
+- Backend : parsing JSON plus robuste — gère les blocs markdown ```json``` autour de la réponse et détecte proprement les réponses vides/malformées.
+- 2026-08-04 — Mode Surprise côté serveur + parsing markdown/JSON robuste + déploiement Vercel.
+
 ## V3.6 (2026-08-04) — Export/import conserve les dates de péremption
 - Correction : l'export/import des réserves ne perdait plus la date limite de consommation (date_peremption) — elle est désormais conservée au transfert entre appareils.
 

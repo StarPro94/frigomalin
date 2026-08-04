@@ -49,5 +49,6 @@ frigo-malin/
 - [x] **Dates de péremption & alertes** — V3.4 : date limite à la réservation, badges « à consommer / périmé » dans les réserves, rappel ⚠️ sur « Ce soir »
 - [x] **Recherche dans le carnet** — V3.5 : filtre les plats gardés par titre / auteur
 - [x] **Export/import conserve les péremptions** — V3.6 : les dates limites de consommation sont gardées d'un appareil à l'autre
+- [x] **Mode Surprise explicite + parsing robuste** — V3.7 : « je n'ai envie de rien » géré côté serveur (chef créatif), réponse IA parsée même en bloc markdown, détection des réponses vides
 
 _Le projet évolue automatiquement (cron d'amélioration continue)._

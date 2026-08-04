@@ -28,6 +28,8 @@ MODES = {
     "gourmand": "gourmand : réconfortant, savoureux, généreux",
     "gras": "gras : indulgente, riche, réconfortante",
     "sportif": "sportif : riche en protéines, adapté à l'effort",
+    "surprise": "surprise : laisse-toi guider, sois créatif et original, "
+                 "varie totalement selon les ingrédients (aucune contrainte de style)",
 }
 DIFFS = {"facile": "Facile", "moyen": "Moyenne", "difficile": "Difficile"}
 
@@ -91,12 +93,18 @@ def _call(prompt, temperature=0.8):
 
 
 def parse_recette(raw):
-    raw = raw.strip()
-    s = raw.find("{")
-    e = raw.rfind("}")
+    if not isinstance(raw, str) or not raw.strip():
+        raise ValueError("Réponse IA vide")
+    raw2 = raw.strip()
+    # retire un éventuel bloc de code markdown ```json ... ```
+    if raw2.startswith("```"):
+        raw2 = re.sub(r"^```[a-zA-Z]*\s*", "", raw2)
+        raw2 = re.sub(r"\s*```\s*$", "", raw2)
+    s = raw2.find("{")
+    e = raw2.rfind("}")
     if s == -1 or e == -1 or e <= s:
         raise ValueError("Réponse IA malformée")
-    return json.loads(raw[s:e + 1])
+    return json.loads(raw2[s:e + 1])
 
 
 def minutes_from(temps):
