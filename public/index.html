@@ -228,6 +228,7 @@
       <div class="counters">
         <button class="filtre on" data-f="tous">Tout</button>
         <button class="filtre" data-f="low">À finir</button>
+        <button class="filtre" data-f="per">⚠️ Péremption</button>
       </div>
       <div class="classeur">
         <button class="actif" data-z="frigo">Frigo <span id="n-frigo"></span></button>
@@ -371,6 +372,7 @@ function renderReserves(){
   if(q)items=items.filter(i=>i.nom.toLowerCase().includes(q));
   const low=/fond|vide|peu|entam|½/i;
   if(appState.filtre==="low")items=items.filter(i=>low.test(i.quantite||""));
+  if(appState.filtre==="per")items=items.filter(i=>peremptionStat(i));
   if(!items.length){box.innerHTML=`<div class="vide">${q?"Rien de ce nom.":"Rien par ici."}</div>`;return;}
   items.sort((a,b)=>a.nom.localeCompare(b.nom,"fr"));
   items.forEach(i=>{

@@ -1,5 +1,9 @@
 # CHANGELOG — FrigoMalin
 
+## V3.9 (2026-08-04) — Filtre « ⚠️ Péremption » dans les réserves
+- Réserves : nouveau filtre **« ⚠️ Péremption »** à côté de « Tout » et « À finir » — affiche uniquement les ingrédients périmés ou à consommer (≤ 2 jours), pratique pour savoir quoi cuisiner en priorité.
+- 2026-08-04 — Filtre péremption dans les réserves + déploiement Vercel.
+
 ## V3.8 (2026-08-04) — Thème jour/nuit mémorisé
 - Frontend : le choix du thème Jour/Nuit est désormais **enregistré** (localStorage) et rétabli automatiquement au prochain chargement — plus besoin de re-cliquer sur ☾ à chaque visite. S'applique dès l'ouverture de l'app.
 - 2026-08-04 — Thème jour/nuit persistant + déploiement Vercel.
