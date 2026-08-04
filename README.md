@@ -41,7 +41,10 @@ frigo-malin/
 - [x] Export / import inventaire
 - [x] **Stockage partagé Redis** (même frigo sur tous les appareils, atomique, aucune perte) — V2
 - [x] **Mode « Surprise »** (je n'ai envie de rien → le chef choisit tout) — V1.2
+- [x] **Zone congélateur** — V2
+- [x] **« Je n'ai pas ça »** : exclure un manquant → recette adaptée — V2
 - [ ] Multi-profils (Patrick / Emeline)
 - [ ] Suggestion qui évite les ingrédients presque périmés
+- [ ] Ajout par dictée vocale
 
 _Le projet évolue automatiquement (cron d'amélioration continue)._
