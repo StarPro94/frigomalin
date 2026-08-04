@@ -1,5 +1,9 @@
 # CHANGELOG — FrigoMalin
 
+## V3.10 (2026-08-04) — Résilience réseau côté serveur
+- Backend : l'appel à DeepSeek réessaie automatiquement (jusqu'à 3 fois, avec court backoff) en cas de panne passagère — timeout, coupure réseau ou réponse 5xx/429 de l'API. Fini la requête qui échoue juste parce qu'DeepSeek bafouille un instant.
+- 2026-08-04 — Retry automatique sur pannes transitoires DeepSeek + déploiement Vercel.
+
 ## V3.9 (2026-08-04) — Filtre « ⚠️ Péremption » dans les réserves
 - Réserves : nouveau filtre **« ⚠️ Péremption »** à côté de « Tout » et « À finir » — affiche uniquement les ingrédients périmés ou à consommer (≤ 2 jours), pratique pour savoir quoi cuisiner en priorité.
 - 2026-08-04 — Filtre péremption dans les réserves + déploiement Vercel.

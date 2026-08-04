@@ -52,5 +52,6 @@ frigo-malin/
 - [x] **Mode Surprise explicite + parsing robuste** — V3.7 : « je n'ai envie de rien » géré côté serveur (chef créatif), réponse IA parsée même en bloc markdown, détection des réponses vides
 - [x] **Thème jour/nuit mémorisé** — V3.8 : le choix ☾/☀ est sauvegardé et rétabli automatiquement au prochain chargement
 - [x] **Filtre « ⚠️ Péremption » dans les réserves** — V3.9 : affiche uniquement les ingrédients périmés ou à consommer (≤ 2 jours), pour cuisiner en priorité ce qui presse
+- [x] **Résilience réseau DeepSeek** — V3.10 : retry automatique (×3, backoff court) sur timeout / coupure / 5xx / 429 — les pannes passagères ne cassent plus la requête
 
 _Le projet évolue automatiquement (cron d'amélioration continue)._
