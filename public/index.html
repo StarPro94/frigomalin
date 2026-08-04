@@ -242,6 +242,7 @@
     <section class="view" id="view-carnet">
       <div class="ecran-titre">Le carnet</div>
       <div class="ecran-soustitre">Les plats qu'on garde.</div>
+      <input class="recherche" id="carnetRech" placeholder="Chercher un plat gardé…">
       <div id="listeCarnet"></div>
     </section>
 
@@ -279,7 +280,7 @@
 const LS_C="office_carnet",LS_U="office_user";
 const appState={view:"today",user:localStorage.getItem(LS_U)||"patrick",theme:"day",inventory:[],zone:"frigo",filtre:"tous",
   mode:"gourmand",duree_max:20,difficulte_max:"facile",parts:2,excl:[],
-  suggestion:null,carnet:JSON.parse(localStorage.getItem(LS_C)||"[]"),timer:null,recogOn:null,chatMsgs:[],_recetteChat:null,
+  suggestion:null,carnet:JSON.parse(localStorage.getItem(LS_C)||"[]"),timer:null,recogOn:null,chatMsgs:[],_recetteChat:null,carnetQ:"",
   bases:[
     "sel","poivre","huile d'olive","beurre","ail","oignon","échalote","vinaigre","moutarde","sauce soja","sucre","farine","bouillon de légumes","bouillon de volaille",
     "paprika","cumin","curry","curcuma","coriandre","herbes de provence","thym","romarin","origan","basilic séché","laurier","piment","cannelle","muscade",
@@ -401,8 +402,12 @@ function ouvreMenuIng(e,ing){
 function renderCarnet(){
   const box=$("listeCarnet");box.innerHTML="";
   if(!appState.carnet.length){box.innerHTML='<div class="vide">Le carnet est encore propre. Les bons plats finiront bientôt ici.</div>';return;}
-  appState.carnet.slice().reverse().forEach((r,i)=>{
-    const idx=appState.carnet.length-1-i;
+  const q=String(appState.carnetQ||"").toLowerCase().trim();
+  let list=appState.carnet.slice();
+  if(q)list=list.filter(r=>String(r.titre||"").toLowerCase().includes(q)||String(r.by||"").toLowerCase().includes(q));
+  if(!list.length){box.innerHTML=`<div class="vide">Rien de ce nom dans le carnet.</div>`;return;}
+  list.slice().reverse().forEach((r,rev)=>{
+    const idx=appState.carnet.length-1-rev;
     const card=document.createElement("div");card.className="car-ligne";
     card.innerHTML=`<div class="date">${esc(r.date||"")}</div><h4>${esc(r.titre||"")}</h4><div class="info">${esc(r.duree||"")}<span>par ${esc(r.by||"")}</span><button class="btn-lien" data-open>Ouvrir</button><button class="btn-lien" data-del style="color:var(--danger);">retirer</button></div>`;
     card.querySelector("[data-open]").addEventListener("click",()=>{if(r.recette)ouvreFiche(r.recette);});
@@ -588,6 +593,7 @@ document.querySelectorAll(".bottomnav [data-nav],.rail [data-nav]").forEach(b=>b
 document.querySelectorAll(".classeur button").forEach(b=>b.addEventListener("click",()=>setOnglet(b.dataset.z)));
 document.querySelectorAll(".filtre").forEach(b=>b.addEventListener("click",()=>setFiltre(b.dataset.f)));
 $("recherche").addEventListener("input",renderReserves);
+$("carnetRech").addEventListener("input",e=>{appState.carnetQ=e.target.value;renderCarnet();});
 $("chipP").addEventListener("click",()=>setUser("patrick"));
 $("chipE").addEventListener("click",()=>setUser("emeline"));
 $("themeBtn").addEventListener("click",toggleTheme);

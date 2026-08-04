@@ -47,5 +47,6 @@ frigo-malin/
 - [x] **Dictée vocale** (ajout d'ingrédients à la voix, fr-FR) — V3.2
 - [x] **Suggestion qui évite les ingrédients presque périmés** — V3.3 : les produits « à finir » sont écartés de la recette du soir (sauvés à part)
 - [x] **Dates de péremption & alertes** — V3.4 : date limite à la réservation, badges « à consommer / périmé » dans les réserves, rappel ⚠️ sur « Ce soir »
+- [x] **Recherche dans le carnet** — V3.5 : filtre les plats gardés par titre / auteur
 
 _Le projet évolue automatiquement (cron d'amélioration continue)._

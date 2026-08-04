@@ -1,5 +1,9 @@
 # CHANGELOG — FrigoMalin
 
+## V3.5 (2026-08-04) — Recherche dans le carnet
+- Champ de recherche dans **Le carnet** : filtre les plats gardés par titre (ou par auteur Patrick/Emeline), même quand la liste s'allonge.
+- 2026-08-04 — Recherche dans le carnet (filtre par titre/auteur) + déploiement Vercel.
+
 ## V3.4 (2026-08-04) — Dates de péremption & alertes
 - À la réservation d'un ingrédient (ou en le modifiant), on peut indiquer une **date limite de consommation** (champ date).
 - **Badges dans les réserves** : « à consommer » (≤ 2 jours) en moutarde, « périmé » en rouge à côté de l'ingrédient.
