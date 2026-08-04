@@ -1,5 +1,8 @@
 # CHANGELOG — FrigoMalin
 
+## V3.3 — Suggestion évitant les produits à finir (2026-08-04)
+- 2026-08-04 10:31 — La suggestion du soir écarte désormais les ingrédients « presque périmés » (produits entamés/à finir) : on ne cuisine plus avec ce qui est sur le point de tourner. Les produits écartés sont listés dans la justification (« J'évite … ») et on les sauve à part.
+
 ## V3.2 — Dictée vocale (2026-08-04)
 - 2026-08-04 09:22 — Ajout d'ingrédients à la voix : bouton 🎙 dans « Ranger quelque chose » — Patrick et Emeline dictent (fr-FR) le nom et éventuellement la quantité restante (« deux tomates » → rangé directement). Masqué si le navigateur ne supporte pas la reconnaissance vocale.
 

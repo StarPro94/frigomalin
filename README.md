@@ -45,6 +45,7 @@ frigo-malin/
 - [x] **« Je n'ai pas ça »** : exclure un manquant → recette adaptée — V2
 - [x] Multi-profils (Patrick / Emeline) — V3.1 : carnet + bases du placard propres à chacun
 - [x] **Dictée vocale** (ajout d'ingrédients à la voix, fr-FR) — V3.2
-- [ ] Suggestion qui évite les ingrédients presque périmés
+- [x] **Suggestion qui évite les ingrédients presque périmés** — V3.3 : les produits « à finir » sont écartés de la recette du soir (sauvés à part)
+- [ ] Gestion de péremption complète (dates, rappels)
 
 _Le projet évolue automatiquement (cron d'amélioration continue)._

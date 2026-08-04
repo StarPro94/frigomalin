@@ -306,14 +306,20 @@ function renderToday(){
 }
 async function generer(){
   $("platTitre").textContent="Je regarde ce qu'il reste…";$("platMetas").innerHTML="";$("platJustif").textContent="";
+  const low=/fond|vide|peu|entam|½/i;
+  // « Presque périmés » — les produits entamés/à finir sont écartés de la suggestion
+  // pour ne pas cuisiner avec ce qui est sur le point de tourner (on les sauve à part).
+  const perimes=[...(new Set(appState.inventory.filter(i=>low.test(i.quantite||"")).map(i=>i.nom)))];
+  const excl=[...new Set([...appState.excl,...perimes])];
   const ingredients=[...appState.inventory.map(i=>i.nom),...appState.basesOn];
   try{
-    const d=await api("/api/recette",j({mode:appState.mode,duree:appState.duree,ingredients,exclusions:appState.excl}));
+    const d=await api("/api/recette",j({mode:appState.mode,duree:appState.duree,ingredients,exclusions:excl}));
     const r=d.recette||d;appState.suggestion=r;
     $("platTitre").textContent=r.titre||"Une idée";
     $("platMetas").innerHTML=(r.temps?`<span>${esc(r.temps)}</span>`:"")+(r.difficulte?`<span>${esc(r.difficulte)}</span>`:"")+(r.calories_estimees?`<span>${esc(r.calories_estimees)}</span>`:"");
     const dispo=r.ingredients_dispo_utilises||[];
     $("platJustif").textContent=dispo.length?"Avec "+(dispo.slice(0,3).join(", "))+(dispo.length>3?" et le reste":"")+" qu'on a déjà.":"Tout est à la maison.";
+    if(perimes.length)$("platJustif").textContent+=" J'évite "+(perimes.slice(0,2).join(", "))+(perimes.length>2?", …":"")+" (à finir).";
     if(appState.excl.length)$("platJustif").textContent+=" (j'ai écarté "+appState.excl.join(", ")+")";
   }catch(e){$("platTitre").textContent="La cuisine réfléchit de travers.";$("platJustif").textContent="On réessaie ?";}
 }
