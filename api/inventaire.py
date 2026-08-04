@@ -45,8 +45,11 @@ def _read_body(h):
 
 
 def _kv(*parts):
-    """Exécute une commande Redis REST. Retourne le dict JSON de réponse."""
-    url = KV_URL + "/" + "/".join(parts)
+    """Exécute une commande Redis REST. Chaque argument est URL-encodé.
+    Retourne le dict JSON de réponse."""
+    from urllib.parse import quote
+    encoded = "/".join(quote(str(p), safe="") for p in parts)
+    url = KV_URL + "/" + encoded
     req = urllib.request.Request(url, headers={
         "Authorization": "Bearer " + KV_TOKEN,
         "User-Agent": "FrigoMalin",
