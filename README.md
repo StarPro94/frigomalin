@@ -48,5 +48,6 @@ frigo-malin/
 - [x] **Suggestion qui évite les ingrédients presque périmés** — V3.3 : les produits « à finir » sont écartés de la recette du soir (sauvés à part)
 - [x] **Dates de péremption & alertes** — V3.4 : date limite à la réservation, badges « à consommer / périmé » dans les réserves, rappel ⚠️ sur « Ce soir »
 - [x] **Recherche dans le carnet** — V3.5 : filtre les plats gardés par titre / auteur
+- [x] **Export/import conserve les péremptions** — V3.6 : les dates limites de consommation sont gardées d'un appareil à l'autre
 
 _Le projet évolue automatiquement (cron d'amélioration continue)._

@@ -1,5 +1,8 @@
 # CHANGELOG — FrigoMalin
 
+## V3.6 (2026-08-04) — Export/import conserve les dates de péremption
+- Correction : l'export/import des réserves ne perdait plus la date limite de consommation (date_peremption) — elle est désormais conservée au transfert entre appareils.
+
 ## V3.5 (2026-08-04) — Recherche dans le carnet
 - Champ de recherche dans **Le carnet** : filtre les plats gardés par titre (ou par auteur Patrick/Emeline), même quand la liste s'allonge.
 - 2026-08-04 — Recherche dans le carnet (filtre par titre/auteur) + déploiement Vercel.

@@ -582,8 +582,8 @@ function exporter(){
 async function importer(ev){
   const f=ev.target.files[0];if(!f)return;const rd=new FileReader();
   rd.onload=async()=>{try{const d=JSON.parse(rd.result);const list=Array.isArray(d)?d:(d.ingredients||[]);
-    const clean=list.map(i=>({nom:String(i.nom||"").trim(),quantite:String(i.quantite||"").trim(),zone:MON[i.zone]||"frigo"})).filter(i=>i.nom);
-    for(const it of clean)await apiAjouter(it.nom,it.quantite,it.zone);
+    const clean=list.map(i=>({nom:String(i.nom||"").trim(),quantite:String(i.quantite||"").trim(),zone:MON[i.zone]||"frigo",date_peremption:(i.date_peremption||"").trim()||null})).filter(i=>i.nom);
+    for(const it of clean)await apiAjouter(it.nom,it.quantite,it.zone,it.date_peremption);
     alert("Copie récupérée.");renderReserves();renderToday();
   }catch(e){alert("Fichier invalide.");}ev.target.value="";};
   rd.readAsText(f);
