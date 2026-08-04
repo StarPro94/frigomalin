@@ -61,6 +61,13 @@
   .classeur button{font-family:"Barlow Condensed";text-transform:uppercase;letter-spacing:.05em;font-weight:600;font-size:14px;border:1px solid var(--ligne);border-bottom:none;padding:8px 14px;background:var(--papier);color:var(--encre-douce);cursor:pointer;border-radius:4px 4px 0 0;position:relative;top:1px;}
   .classeur button.actif{background:var(--papier-clair);color:var(--encre);font-weight:800;}
   .recherche{font-family:"Literata";font-size:15px;padding:11px 12px;border:1px solid var(--ligne);border-radius:2px;background:var(--papier-clair);color:var(--encre);width:100%;margin-bottom:10px;}
+  .ligne-vocal{display:flex;gap:8px;align-items:center;}
+  .ligne-vocal .recherche{margin-bottom:10px;}
+  .mic{flex:0 0 auto;width:42px;height:42px;font-size:18px;border:1px solid var(--ligne);border-radius:2px;background:var(--papier-clair);color:var(--tomate);cursor:pointer;margin-bottom:10px;}
+  .mic.ecoute{background:var(--tomate);color:#fff;animation:clignote 1s ease-in-out infinite;}
+  .mic.masque{display:none;}
+  @keyframes clignote{50%{opacity:.5;}}
+
   .recherche:focus{outline:none;border-color:var(--bois);}
   .counters{display:flex;gap:10px;margin-bottom:8px;flex-wrap:wrap;}
   .filtre{font-family:"Barlow Condensed";font-size:12px;text-transform:uppercase;background:none;border:1px dashed var(--ligne);color:var(--encre-douce);padding:4px 10px;border-radius:2px;cursor:pointer;}
@@ -409,12 +416,16 @@ function openSheet(which){
   if(which==="add"){
     appState.zoneAdd="frigo";
     b.innerHTML=`<h3>Ranger quelque chose</h3>
-      <input class="recherche" id="sNom" placeholder="Ex. champignons, un fond de crème…">
+      <div class="ligne-vocal">
+        <input class="recherche" id="sNom" placeholder="Ex. champignons, un fond de crème…">
+        <button class="mic ${recog()?'':'masque'}" id="btnMic" title="Dicter à la voix">🎙</button>
+      </div>
       <input class="recherche" id="sQte" placeholder="Il en reste combien ? (2, un fond, ½ paquet)">
       <div class="zone-choix" id="zCh"><button class="on" data-z="frigo">Frigo</button><button data-z="garde-manger">Placard</button><button data-z="congelateur">Congélo</button></div>
       <button class="btn btn-tomate" style="width:100%;" id="btnValider">C'est rangé</button>`;
     b.querySelectorAll("#zCh button").forEach(bn=>bn.addEventListener("click",()=>{appState.zoneAdd=bn.dataset.z;b.querySelectorAll("#zCh button").forEach(x=>x.classList.remove("on"));bn.classList.add("on");}));
     $("btnValider").addEventListener("click",validerAjout);
+    if(recog())$("btnMic").addEventListener("click",dicterAjout);
   }else{
     let m="";["healthy","gourmand","gras","sportif","surprise"].forEach(x=>m+=`<button class="${appState.mode===x?"on":""}" data-m="${x}">${x}</button>`);
     let d="";["rapide","moyen","long"].forEach(x=>d+=`<button class="${appState.duree===x?"on":""}" data-d="${x}">${x}</button>`);
@@ -426,6 +437,34 @@ function openSheet(which){
   s.classList.add("open");
 }
 function fermerSheet(){$("sheet").classList.remove("open");}
+// ---------- Dictée vocale (ajout d'ingrédients à la voix) ----------
+function recog(){return !!(window.SpeechRecognition||window.webkitSpeechRecognition);}
+function dicterAjout(){
+  if(!recog()){alert("La dictée n'est pas disponible sur cet appareil.");return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  const btn=$("btnMic");
+  if(appState.recogOn){appState.recogOn.abort();return;}
+  const r=new SR();
+  appState.recogOn=r;
+  r.lang="fr-FR";r.interimResults=false;r.maxAlternatives=1;
+  btn.classList.add("ecoute");btn.textContent="…";
+  r.onresult=e=>{
+    const t=(e.results[0][0].transcript||"").trim().toLowerCase();
+    if(!t)return;
+    // Découpe « 2 tomates » → quantité + nom
+    const m=t.match(/^(?:une |un |deux |trois |quatre |cinq |2|3|4|5|\d+\s*)+(.+)$/);
+    const qte=t.match(/^(une |un |deux |trois |quatre |cinq |\d+\s*)/);
+    $("sNom").value=qte&&m?m[1]:(t.charAt(0).toUpperCase()+t.slice(1));
+    if(qte)$("sQte").value=qte[1].trim();
+  };
+  r.onend=()=>{btn.classList.remove("ecoute");btn.textContent="🎙";appState.recogOn=null;
+    const nom=$("sNom").value.trim();if(!nom)return;
+    const qte=$("sQte").value.trim();
+    ajouterApi(nom,qte,appState.zoneAdd).then(ok=>{ if(ok){fermerSheet();renderReserves();renderToday();}else alert("Impossible de ranger."); });
+  };
+  r.onerror=e=>{btn.classList.remove("ecoute");btn.textContent="🎙";appState.recogOn=null;if(e.error!=="aborted")alert("Dictée impossible : "+e.error);};
+  try{r.start();}catch(e){}
+}
 async function validerAjout(){
   const nom=$("sNom").value.trim();if(!nom)return;
   const qte=$("sQte").value.trim();

@@ -44,7 +44,7 @@ frigo-malin/
 - [x] **Zone congélateur** — V2
 - [x] **« Je n'ai pas ça »** : exclure un manquant → recette adaptée — V2
 - [x] Multi-profils (Patrick / Emeline) — V3.1 : carnet + bases du placard propres à chacun
+- [x] **Dictée vocale** (ajout d'ingrédients à la voix, fr-FR) — V3.2
 - [ ] Suggestion qui évite les ingrédients presque périmés
-- [ ] Ajout par dictée vocale
 
 _Le projet évolue automatiquement (cron d'amélioration continue)._

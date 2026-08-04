@@ -1,5 +1,8 @@
 # CHANGELOG — FrigoMalin
 
+## V3.2 — Dictée vocale (2026-08-04)
+- 2026-08-04 09:22 — Ajout d'ingrédients à la voix : bouton 🎙 dans « Ranger quelque chose » — Patrick et Emeline dictent (fr-FR) le nom et éventuellement la quantité restante (« deux tomates » → rangé directement). Masqué si le navigateur ne supporte pas la reconnaissance vocale.
+
 ## V3.1 — Multi-profils (2026-08-04)
 - **Carnet et bases du placard désormais propres à chacun** : Patrick et Emeline ont chacun leur carnet de plats gardés et leurs bases cochables — le profil actif (chip P/E) charge/sauvegarde ses propres données (localStorage par profil).
 
