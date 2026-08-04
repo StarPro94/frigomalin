@@ -1,5 +1,10 @@
 # CHANGELOG — FrigoMalin
 
+## V3.11 (2026-08-04) — Favoris de recettes ❤️
+- Nouveau : bouton **« ❤️ Mettre en favori »** directement dans la fiche recette pour marquer un plat qu'on adore.
+- Dans **Le carnet**, filtre **« ❤️ Favoris »** pour ne voir que les plats en favori ; chaque plat gardé a un bouton ♥/💔 pour l'ajouter/retirer, et un ♥ s'affiche à côté du titre. Les favoris sont enregistrés dans le navigateur.
+- 2026-08-04 20:10 — Favoris de recettes (♥ dans la fiche + filtre Favoris au carnet) + déploiement Vercel.
+
 ## V3.10 (2026-08-04) — Résilience réseau côté serveur
 - Backend : l'appel à DeepSeek réessaie automatiquement (jusqu'à 3 fois, avec court backoff) en cas de panne passagère — timeout, coupure réseau ou réponse 5xx/429 de l'API. Fini la requête qui échoue juste parce qu'DeepSeek bafouille un instant.
 - 2026-08-04 — Retry automatique sur pannes transitoires DeepSeek + déploiement Vercel.

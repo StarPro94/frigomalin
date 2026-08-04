@@ -53,5 +53,6 @@ frigo-malin/
 - [x] **Thème jour/nuit mémorisé** — V3.8 : le choix ☾/☀ est sauvegardé et rétabli automatiquement au prochain chargement
 - [x] **Filtre « ⚠️ Péremption » dans les réserves** — V3.9 : affiche uniquement les ingrédients périmés ou à consommer (≤ 2 jours), pour cuisiner en priorité ce qui presse
 - [x] **Résilience réseau DeepSeek** — V3.10 : retry automatique (×3, backoff court) sur timeout / coupure / 5xx / 429 — les pannes passagères ne cassent plus la requête
+- [x] **Favoris de recettes** — V3.11 : bouton « ❤️ Mettre en favori » dans la fiche, filtre « ❤️ Favoris » au carnet pour ne voir que les plats qu'on adore
 
 _Le projet évolue automatiquement (cron d'amélioration continue)._

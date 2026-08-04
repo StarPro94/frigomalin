@@ -244,6 +244,7 @@
       <div class="ecran-titre">Le carnet</div>
       <div class="ecran-soustitre">Les plats qu'on garde.</div>
       <input class="recherche" id="carnetRech" placeholder="Chercher un plat gardé…">
+      <div style="margin-bottom:8px;"><button class="chip" id="btnFavOnly">❤️ Favoris</button><span class="cond" style="font-size:12px;color:var(--encre-douce);" id="favCompte"></span></div>
       <div id="listeCarnet"></div>
     </section>
 
@@ -278,10 +279,10 @@
 
 <script>
 // ---------- État ----------
-const LS_C="office_carnet",LS_U="office_user",LS_T="office_theme";
+const LS_C="office_carnet",LS_U="office_user",LS_T="office_theme",LS_F="office_favoris";
 const appState={view:"today",user:localStorage.getItem(LS_U)||"patrick",theme:localStorage.getItem(LS_T)==="night"?"night":"day",inventory:[],zone:"frigo",filtre:"tous",
   mode:"gourmand",duree_max:20,difficulte_max:"facile",parts:2,excl:[],
-  suggestion:null,carnet:JSON.parse(localStorage.getItem(LS_C)||"[]"),timer:null,recogOn:null,chatMsgs:[],_recetteChat:null,carnetQ:"",
+  suggestion:null,carnet:JSON.parse(localStorage.getItem(LS_C)||"[]"),favoris:JSON.parse(localStorage.getItem(LS_F)||"[]"),favOnly:false,timer:null,recogOn:null,chatMsgs:[],_recetteChat:null,carnetQ:"",
   bases:[
     "sel","poivre","huile d'olive","beurre","ail","oignon","échalote","vinaigre","moutarde","sauce soja","sucre","farine","bouillon de légumes","bouillon de volaille",
     "paprika","cumin","curry","curcuma","coriandre","herbes de provence","thym","romarin","origan","basilic séché","laurier","piment","cannelle","muscade",
@@ -402,18 +403,42 @@ function ouvreMenuIng(e,ing){
   setTimeout(()=>{document.addEventListener("click",function h(){pm.remove();document.removeEventListener("click",h);});},10);
 }
 // ---------- Carnet ----------
+function estFavori(titre){return appState.favoris.some(f=>f===titre);}
+function toggleFavori(r){
+  const t=r.titre||r;
+  const i=appState.favoris.indexOf(t);
+  if(i>-1)appState.favoris.splice(i,1);else appState.favoris.push(t);
+  localStorage.setItem(LS_F,JSON.stringify(appState.favoris));
+  majBtnFav();
+}
+function majBtnFav(){
+  const b=$("btnFav");
+  if(b&&appState._recetteChat&&b.dataset.t){
+    const fav=estFavori(b.dataset.t);
+    b.innerHTML=fav?"💔 Retirer des favoris":"❤️ Mettre en favori";
+    b.classList.toggle("btn-tomate",fav);b.classList.toggle("btn-ligne",!fav);
+  }
+}
 function renderCarnet(){
   const box=$("listeCarnet");box.innerHTML="";
+  const favC=$("btnFavOnly"),favN=$("favCompte");
+  if(favC){
+    favC.classList.toggle("on",appState.favOnly);
+    favC.textContent=appState.favOnly?"❤️ Tous":"❤️ Favoris";
+    favN.textContent=appState.favoris.length?` · ${appState.favoris.length} en favori`:"";
+  }
   if(!appState.carnet.length){box.innerHTML='<div class="vide">Le carnet est encore propre. Les bons plats finiront bientôt ici.</div>';return;}
   const q=String(appState.carnetQ||"").toLowerCase().trim();
   let list=appState.carnet.slice();
   if(q)list=list.filter(r=>String(r.titre||"").toLowerCase().includes(q)||String(r.by||"").toLowerCase().includes(q));
-  if(!list.length){box.innerHTML=`<div class="vide">Rien de ce nom dans le carnet.</div>`;return;}
+  if(appState.favOnly)list=list.filter(r=>estFavori(r.titre));
+  if(!list.length){box.innerHTML=`<div class="vide">Rien de ce nom ${appState.favOnly?"en favori":""} dans le carnet.</div>`;return;}
   list.slice().reverse().forEach((r,rev)=>{
     const idx=appState.carnet.length-1-rev;
     const card=document.createElement("div");card.className="car-ligne";
-    card.innerHTML=`<div class="date">${esc(r.date||"")}</div><h4>${esc(r.titre||"")}</h4><div class="info">${esc(r.duree||"")}<span>par ${esc(r.by||"")}</span><button class="btn-lien" data-open>Ouvrir</button><button class="btn-lien" data-del style="color:var(--danger);">retirer</button></div>`;
+    card.innerHTML=`<div class="date">${esc(r.date||"")}</div><h4>${esc(r.titre||"")} ${estFavori(r.titre)?"❤️":""}</h4><div class="info">${esc(r.duree||"")}<span>par ${esc(r.by||"")}</span><button class="btn-lien" data-open>Ouvrir</button><button class="btn-lien" data-fav style="color:${estFavori(r.titre)?"var(--tomate)":"var(--bois)"};">${estFavori(r.titre)?"💔":"❤️"}</button><button class="btn-lien" data-del style="color:var(--danger);">retirer</button></div>`;
     card.querySelector("[data-open]").addEventListener("click",()=>{if(r.recette)ouvreFiche(r.recette);});
+    card.querySelector("[data-fav]").addEventListener("click",()=>{toggleFavori(r);renderCarnet();});
     card.querySelector("[data-del]").addEventListener("click",()=>{appState.carnet.splice(idx,1);saveCarnet();renderCarnet();});
     box.appendChild(card);
   });
@@ -453,6 +478,7 @@ function ouvreFiche(r){
     <div id="timerSlot"></div>
     <div class="barre-action">
       <button class="btn btn-ligne" id="btnTimer">Minuteur 10 min</button>
+      <button class="btn btn-ligne" id="btnFav">❤️ Mettre en favori</button>
       <button class="btn btn-tomate" id="btnGarder">⭐ Garder ce plat</button>
     </div>`;
   $("btnFermerFiche").addEventListener("click",closeFiche);
@@ -462,6 +488,7 @@ function ouvreFiche(r){
   $("chatIn").addEventListener("keydown",e=>{if(e.key==="Enter")envoyerChat();});
   $("btnTimer").addEventListener("click",demarrerMinuteur);
   $("btnGarder").addEventListener("click",()=>{garderAuCarnet(r);});
+  const bf=$("btnFav");if(bf){bf.dataset.t=(r.titre)||"";bf.addEventListener("click",()=>toggleFavori(r));majBtnFav();}
   f.classList.add("open");$("overlay").classList.add("show");
 }
 function changePartsRefresh(r){$("partsV").textContent=r.parts;const f=$("fiche");/* re-affiche les meta % non réutilisable facilement ici → fait simple */ }
@@ -597,6 +624,7 @@ document.querySelectorAll(".classeur button").forEach(b=>b.addEventListener("cli
 document.querySelectorAll(".filtre").forEach(b=>b.addEventListener("click",()=>setFiltre(b.dataset.f)));
 $("recherche").addEventListener("input",renderReserves);
 $("carnetRech").addEventListener("input",e=>{appState.carnetQ=e.target.value;renderCarnet();});
+$("btnFavOnly").addEventListener("click",()=>{appState.favOnly=!appState.favOnly;renderCarnet();});
 $("chipP").addEventListener("click",()=>setUser("patrick"));
 $("chipE").addEventListener("click",()=>setUser("emeline"));
 $("themeBtn").addEventListener("click",toggleTheme);
