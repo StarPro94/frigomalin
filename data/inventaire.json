@@ -9,6 +9,11 @@
       "nom": "pommes",
       "quantite": "4",
       "zone": "frigo"
+    },
+    {
+      "nom": "pâtes",
+      "quantite": "500g",
+      "zone": "garde-manger"
     }
   ]
 }
