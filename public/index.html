@@ -237,11 +237,17 @@
 
 <script>
 // ---------- État ----------
+// Multi-profils : le carnet et les bases du placard sont propres à chacun (Patrick / Emeline).
+function userKey(u,base){return "office_"+(u==="emeline"?"emeline":"patrick")+"_"+base;}
+function loadUserCarnet(u){u=u||appState.user;try{const v=JSON.parse(localStorage.getItem(userKey(u,"carnet"))||"null");return Array.isArray(v)?v:[];}catch(e){return [];}}
+function saveUserCarnet(){localStorage.setItem(userKey(appState.user,"carnet"),JSON.stringify(appState.carnet));}
+function loadUserBases(u){u=u||appState.user;try{const v=JSON.parse(localStorage.getItem(userKey(u,"basesOn")));return Array.isArray(v)?v:null;}catch(e){return null;}}
+function saveUserBases(){localStorage.setItem(userKey(appState.user,"basesOn"),JSON.stringify(appState.basesOn));}
 const appState={view:"today",user:"patrick",theme:"day",inventory:[],zone:"frigo",filtre:"tous",mode:"gourmand",duree:"moyen",suggestion:null,excl:[],
-  bases:["sel","poivre","huile d'olive","beurre","ail","oignon","vinaigre","paprika","cumin","herbes de provence"],basesOn:["sel","poivre","huile d'olive","beurre","ail","oignon"],
-  carnet:JSON.parse(localStorage.getItem("office_carnet")||"[]"),timer:null};
+  bases:["sel","poivre","huile d'olive","beurre","ail","oignon","vinaigre","paprika","cumin","herbes de provence"],
+  basesOn:loadUserBases("patrick")||["sel","poivre","huile d'olive","beurre","ail","oignon"],
+  carnet:loadUserCarnet("patrick"),timer:null};
 let _mutex=false;
-const LS="office_carnet";
 
 // ---------- Helpers ----------
 async function api(url,opts){const r=await fetch(url,opts);const t=await r.text();let d;try{d=JSON.parse(t);}catch(e){d={};}if(!r.ok)throw new Error(d.error||"Erreur "+r.status);return d;}
@@ -259,7 +265,13 @@ function navigate(v){
   if(v==="today")renderToday();if(v==="reserves")renderReserves();if(v==="carnet")renderCarnet();if(v==="nous")renderNous();
 }
 // ---------- Users / theme ----------
-function setUser(u){appState.user=u;$("chipP").classList.toggle("cur",u==="patrick");$("chipE").classList.toggle("cur",u==="emeline");renderNous();renderToday();}
+function setUser(u){
+  appState.user=u;
+  $("chipP").classList.toggle("cur",u==="patrick");$("chipE").classList.toggle("cur",u==="emeline");
+  appState.carnet=loadUserCarnet(u);
+  const b=loadUserBases(u);if(Array.isArray(b))appState.basesOn=b;
+  renderNous();renderToday();renderCarnet();
+}
 function toggleTheme(){appState.theme=appState.theme==="day"?"night":"day";document.body.dataset.theme=appState.theme;$("themeBtn").textContent=appState.theme==="day"?"☾":"☀";}
 
 // ---------- Inventaire ----------
@@ -330,7 +342,7 @@ function renderCarnet(){
     const card=document.createElement("div");card.className="car-ligne";
     card.innerHTML=`<div class="date">${esc(r.date||"")}</div><h4>${esc(r.titre||"")}</h4><div class="info">${esc(r.duree||"")}<span>par ${esc(r.by||"")}</span><button class="btn-lien" data-open>Ouvrir</button><button class="btn-lien" data-del style="color:var(--danger);">retirer</button></div>`;
     card.querySelector("[data-open]").addEventListener("click",()=>{if(r.recette)ouvreFiche(r.recette);});
-    card.querySelector("[data-del]").addEventListener("click",()=>{appState.carnet.splice(idx,1);localStorage.setItem(LS,JSON.stringify(appState.carnet));renderCarnet();});
+    card.querySelector("[data-del]").addEventListener("click",()=>{appState.carnet.splice(idx,1);saveUserCarnet();renderCarnet();});
     box.appendChild(card);
   });
 }
@@ -340,7 +352,7 @@ function renderNous(){
   $("profilP").classList.toggle("cur",appState.user==="patrick");$("profilE").classList.toggle("cur",appState.user==="emeline");
   const box=$("bases");box.innerHTML="";
   appState.bases.forEach(b=>{const btn=document.createElement("button");btn.className="base"+(appState.basesOn.includes(b)?" on":"");btn.textContent=b;
-    btn.addEventListener("click",()=>{const i=appState.basesOn.indexOf(b);if(i>-1)appState.basesOn.splice(i,1);else appState.basesOn.push(b);renderNous();});box.appendChild(btn);});
+    btn.addEventListener("click",()=>{const i=appState.basesOn.indexOf(b);if(i>-1)appState.basesOn.splice(i,1);else appState.basesOn.push(b);saveUserBases();renderNous();});box.appendChild(btn);});
 }
 
 // ---------- Fiche recette ----------
@@ -387,7 +399,7 @@ function demarrerMinuteur(){
 }
 function garderAuCarnet(r){
   appState.carnet.push({titre:r.titre||"Recette",date:new Date().toLocaleDateString("fr-FR"),duree:r.temps||"",by:appState.user==="patrick"?"Patrick":"Emeline",recette:r});
-  localStorage.setItem(LS,JSON.stringify(appState.carnet));
+  saveUserCarnet();
   closeFiche();navigate("carnet");renderCarnet();
 }
 
@@ -453,7 +465,7 @@ $("btnExport").addEventListener("click",exporter);
 $("importFile").addEventListener("change",importer);
 $("overlay").addEventListener("click",closeFiche);
 
-renderNous();renderReserves();renderToday();syncUI();
+renderNous();renderReserves();renderToday();renderCarnet();syncUI();
 refresh();
 setInterval(()=>{if(!_mutex)refresh();},12000);
 </script>
