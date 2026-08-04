@@ -1,1 +1,9 @@
-{"ingredients":[]}
+{
+  "ingredients": [
+    {
+      "nom": "pates",
+      "quantite": "500g",
+      "zone": "garde-manger"
+    }
+  ]
+}
