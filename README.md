@@ -43,7 +43,7 @@ frigo-malin/
 - [x] **Mode « Surprise »** (je n'ai envie de rien → le chef choisit tout) — V1.2
 - [x] **Zone congélateur** — V2
 - [x] **« Je n'ai pas ça »** : exclure un manquant → recette adaptée — V2
-- [ ] Multi-profils (Patrick / Emeline)
+- [x] Multi-profils (Patrick / Emeline) — V3.1 : carnet + bases du placard propres à chacun
 - [ ] Suggestion qui évite les ingrédients presque périmés
 - [ ] Ajout par dictée vocale
 

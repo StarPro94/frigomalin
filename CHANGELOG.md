@@ -1,5 +1,8 @@
 # CHANGELOG — FrigoMalin
 
+## V3.1 — Multi-profils (2026-08-04)
+- **Carnet et bases du placard désormais propres à chacun** : Patrick et Emeline ont chacun leur carnet de plats gardés et leurs bases cochables — le profil actif (chip P/E) charge/sauvegarde ses propres données (localStorage par profil).
+
 ## V3 — « L'Office » (2026-08-04)
 Refonte en profondeur, sortie totale du « slop IA » :
 - **VRAIE structure d'app** : SPA à 4 écrans (Ce soir / Réserves / Carnet / Nous) avec bottom nav mobile + rail latéral desktop — plus une page qui scrolle.
