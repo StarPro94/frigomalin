@@ -46,9 +46,15 @@ def _read_body(handler):
         return {}
 
 
-def build_prompt(ingredients, mode, duration):
+def build_prompt(ingredients, mode, duration, exclusions=None):
     dispo = ", ".join(ingredients) if ingredients else "AUCUN (propose un plat à partir de rien / bases de placard classiques)"
-
+    excl = ""
+    if exclusions:
+        excl = (
+            "\nIMPORTANT : je n'ai PAS ces ingrédients et je ne veux PAS qu'ils apparaissent dans ta recette "
+            f"(ni comme ingrédient utilisé, ni comme manquant) : {', '.join(exclusions)}. "
+            "Adapte la recette pour les éviter complètement, quitte à ce que ce soit très différent."
+        )
     if mode == "surprise":
         # Mode « je n'ai envie de rien » : on laisse le hasard décider le style
         # et la durée, et on pousse l'IA à surprendre à chaque appel.
@@ -76,7 +82,7 @@ def build_prompt(ingredients, mode, duration):
 
     return f"""
 Contexte : je dois cuisiner avec ce que j'ai. {contexte}
-
+{excl}
 Réponds en JSON avec EXACTEMENT cette structure (pas de markdown, pas de texte autour) :
 {{
   "titre": "Nom de la recette",
@@ -149,8 +155,12 @@ class handler(BaseHTTPRequestHandler):
         ingredients = [str(i).strip() for i in ingredients if str(i).strip()]
         mode = str(body.get("mode", "gourmand"))
         duration = str(body.get("duree", "moyen"))
+        exclusions = body.get("exclusions")
+        if not isinstance(exclusions, list):
+            exclusions = []
+        exclusions = [str(i).strip() for i in exclusions if str(i).strip()]
         try:
-            raw = call_deepseek(build_prompt(ingredients, mode, duration))
+            raw = call_deepseek(build_prompt(ingredients, mode, duration, exclusions))
             recette = parse_recette(raw)
             _send(self, 200, {"ok": True, "recette": recette})
         except urllib.error.HTTPError as e:

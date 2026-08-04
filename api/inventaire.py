@@ -162,7 +162,7 @@ class handler(BaseHTTPRequestHandler):
                 ing = {
                     "nom": nom,
                     "quantite": str(body.get("quantite", "")).strip() or "",
-                    "zone": body.get("zone") == "garde-manger" and "garde-manger" or "frigo",
+                    "zone": body.get("zone") if body.get("zone") in ("frigo", "garde-manger", "congelateur") else "frigo",
                 }
                 _send(self, 200, {"ingredients": _add(ing)})
             elif action == "supprimer":
