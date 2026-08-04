@@ -143,41 +143,10 @@ class handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         body = _read_body(self)
-        path = self.path.split("?")[0]
+        action = body.get("action", "ajouter")
 
-        # --- Suppression par nom ---
-        if path == "/api/inventaire/supprimer":
-            nom = str(body.get("nom", "")).strip()
-            if not nom:
-                _send(self, 400, {"error": "nom manquant"})
-                return
-            key = norm(nom)
-            def apply(items):
-                return [i for i in items if norm(i.get("nom", "")) != key]
-            try:
-                res = update(apply)
-                _send(self, 200, res)
-            except RuntimeError as e:
-                _send(self, 502, {"error": f"Erreur suppression : {e}"})
-            except Exception as e:
-                _send(self, 502, {"error": f"Erreur suppression : {e}"})
-            return
-
-        # --- Vider tout ---
-        if path == "/api/inventaire/vider":
-            def apply(items):
-                return []
-            try:
-                res = update(apply)
-                _send(self, 200, res)
-            except RuntimeError as e:
-                _send(self, 502, {"error": f"Erreur vidage : {e}"})
-            except Exception as e:
-                _send(self, 502, {"error": f"Erreur vidage : {e}"})
-            return
-
-        # --- Ajout / mise à jour (route par défaut /api/inventaire) ---
-        if path == "/api/inventaire":
+        # --- Ajout / mise à jour ---
+        if action == "ajouter":
             nom = str(body.get("nom", "")).strip()
             if not nom:
                 _send(self, 400, {"error": "nom manquant"})
@@ -199,12 +168,46 @@ class handler(BaseHTTPRequestHandler):
                 res = update(apply)
                 _send(self, 200, res)
             except RuntimeError as e:
-                _send(self, 502, {"error": f"Erreur ajout : {e}"})
+                if str(e) == "NO_TOKEN":
+                    _send(self, 500, {"error": "GITHUB_TOKEN absent sur Vercel"})
+                else:
+                    _send(self, 502, {"error": f"Erreur ajout : {e}"})
             except Exception as e:
                 _send(self, 502, {"error": f"Erreur ajout : {e}"})
             return
 
-        _send(self, 404, {"error": "not found"})
+        # --- Suppression par nom ---
+        if action == "supprimer":
+            nom = str(body.get("nom", "")).strip()
+            if not nom:
+                _send(self, 400, {"error": "nom manquant"})
+                return
+            key = norm(nom)
+            def apply(items):
+                return [i for i in items if norm(i.get("nom", "")) != key]
+            try:
+                res = update(apply)
+                _send(self, 200, res)
+            except RuntimeError as e:
+                _send(self, 502, {"error": f"Erreur suppression : {e}"})
+            except Exception as e:
+                _send(self, 502, {"error": f"Erreur suppression : {e}"})
+            return
+
+        # --- Vider tout ---
+        if action == "vider":
+            def apply(items):
+                return []
+            try:
+                res = update(apply)
+                _send(self, 200, res)
+            except RuntimeError as e:
+                _send(self, 502, {"error": f"Erreur vidage : {e}"})
+            except Exception as e:
+                _send(self, 502, {"error": f"Erreur vidage : {e}"})
+            return
+
+        _send(self, 400, {"error": "action inconnue"})
 
     def log_message(self, fmt, *args):
         pass

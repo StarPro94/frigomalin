@@ -218,7 +218,7 @@ async function ajouter(){
   const zone = document.getElementById("zone").value;
   _mutex = true;
   try{
-    const d = await api("/api/inventaire", j({nom, quantite:qty, zone}));
+    const d = await api("/api/inventaire", j({action:"ajouter", nom, quantite:qty, zone}));
     ETAT.ingredients = d.ingredients || [];
     document.getElementById("nom").value="";
     document.getElementById("qty").value="";
@@ -231,7 +231,7 @@ async function ajouter(){
 async function supprimer(nom){
   _mutex = true;
   try{
-    const d = await api("/api/inventaire/supprimer", j({nom}));
+    const d = await api("/api/inventaire", j({action:"supprimer", nom}));
     ETAT.ingredients = d.ingredients || [];
     render(); setSync("ok","🔄 à jour");
   }catch(e){ showErr(e.message); }
@@ -242,7 +242,7 @@ async function vider(){
   if(!confirm("Vider tout l'inventaire partagé ? (affecte aussi l'autre appareil)")) return;
   _mutex = true;
   try{
-    const d = await api("/api/inventaire/vider", j({}));
+    const d = await api("/api/inventaire", j({action:"vider"}));
     ETAT.ingredients = d.ingredients || [];
     render(); setSync("ok","🔄 à jour");
   }catch(e){ showErr(e.message); }
@@ -276,7 +276,7 @@ async function importerBatch(items){
   try{
     let d = {ingredients: ETAT.ingredients};
     for(const it of items){
-      d = await api("/api/inventaire", j({nom:it.nom, quantite:it.quantite, zone:it.zone}));
+      d = await api("/api/inventaire", j({action:"ajouter", nom:it.nom, quantite:it.quantite, zone:it.zone}));
     }
     ETAT.ingredients = d.ingredients || [];
     render(); setSync("ok","🔄 à jour");
