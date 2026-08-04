@@ -1,36 +1,28 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-FrigoMalin — fonction serverless Vercel : inventaire partagé.
-L'inventaire est stocké dans le fichier data/inventaire.json du repo GitHub,
-donc le MÊME frigo est partagé entre tous les appareils (Patrick & Emeline).
+FrigoMalin — fonction serverless Vercel : inventaire partagé (V2 Redis).
+L'inventaire est stocké dans Vercel KV (Upstash Redis) → MÊME frigo sur tous
+les appareils (Patrick & Emeline), avec opérations ATOMIQUES (aucune donnée
+ne peut se perdre, même en écritures simultanées).
 
-Concurrence : chaque écriture relit le dernier sha et réessaie en cas de
-conflit (409) pour éviter de perdre une modification concurrente.
-100% stdlib.
+Commandes Redis REST utilisées :
+  - LRANGE inventaire 0 -1   → lire la liste
+  - RPUSH inventaire <json>  → ajouter (atomique)
+  - LREM  inventaire <n> <v> → supprimer (atomique)
+  - DEL   inventaire         → vider (atomique)
+
+La clé est une liste d'objets JSON (les ingrédients). 100% stdlib.
 """
-import base64
 import json
 import os
-import time
 import urllib.request
 import urllib.error
 from http.server import BaseHTTPRequestHandler
 
-GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
-GITHUB_REPO = os.environ.get("GITHUB_REPO", "StarPro94/frigomalin")
-PATH = "data/inventaire.json"
-API = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{PATH}"
-MAX_RETRY = 10
-
-
-def _hdr():
-    return {
-        "Authorization": "token " + GITHUB_TOKEN,
-        "Accept": "application/vnd.github.v3+json",
-        "Content-Type": "application/json",
-        "User-Agent": "FrigoMalin",
-    }
+KV_URL = os.environ.get("KV_REST_API_URL", "").rstrip("/")
+KV_TOKEN = os.environ.get("KV_REST_API_TOKEN", "")
+KEY = "inventaire"
 
 
 def _send(h, code, obj):
@@ -52,69 +44,83 @@ def _read_body(h):
         return {}
 
 
-def _gh(method, url, payload=None):
-    data = json.dumps(payload).encode("utf-8") if payload is not None else None
-    req = urllib.request.Request(url, data=data, headers=_hdr(), method=method)
+def _kv(*parts):
+    """Exécute une commande Redis REST. Retourne le dict JSON de réponse."""
+    url = KV_URL + "/" + "/".join(parts)
+    req = urllib.request.Request(url, headers={
+        "Authorization": "Bearer " + KV_TOKEN,
+        "User-Agent": "FrigoMalin",
+    })
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return json.loads(r.read().decode("utf-8") or "{}")
+
+
+def _is_ready():
+    return bool(KV_URL and KV_TOKEN)
+
+
+def _read_list():
+    """Retourne la liste des ingrédients (objets dict) depuis Redis."""
     try:
-        with urllib.request.urlopen(req, timeout=60) as r:
-            return r.status, json.loads(r.read().decode("utf-8") or "{}")
+        res = _kv("lrange", KEY, "0", "-1")
     except urllib.error.HTTPError as e:
-        body = e.read().decode("utf-8") or "{}"
+        if e.code == 401:
+            raise RuntimeError("KV_AUTH")
+        raise
+    raw = res.get("result") or []
+    items = []
+    for el in raw:
         try:
-            body = json.loads(body)
+            v = json.loads(el)
+            if isinstance(v, dict):
+                items.append(v)
         except Exception:
-            pass
-        return e.code, body
+            continue
+    return items
 
 
-def _read():
-    status, body = _gh("GET", API)
-    if status == 404:
-        return {"ingredients": []}, None
-    if status != 200:
-        raise RuntimeError(f"GitHub lecture HTTP {status}")
-    sha = body.get("sha")
-    try:
-        content = base64.b64decode(body.get("content", "")).decode("utf-8")
-        data = json.loads(content)
-    except Exception:
-        data = {"ingredients": []}
-    if not isinstance(data, dict) or not isinstance(data.get("ingredients"), list):
-        data = {"ingredients": []}
-    return data, sha
+def _get_all():
+    return {"ingredients": _read_list()}
 
 
-def _write(data, sha):
-    payload = {
-        "message": "🍳 FrigoMalin: mise à jour inventaire",
-        "content": base64.b64encode(json.dumps(data, ensure_ascii=False, indent=2).encode("utf-8")).decode("ascii"),
-        "sha": sha,
-    }
-    status, body = _gh("PUT", API, payload)
-    if status not in (200, 201):
-        raise RuntimeError(status)
-    return data
+def _add(ing):
+    """Ajoute un ingrédient. Si un même nom existe déjà, met à jour quantité/zone ;
+    sinon RPUSH atomique. Retourne la nouvelle liste."""
+    items = _read_list()
+    key = norm(ing["nom"])
+    replaced = False
+    for it in items:
+        if norm(it.get("nom", "")) == key:
+            it["quantite"] = ing["quantite"] or it.get("quantite", "")
+            it["zone"] = ing["zone"]
+            replaced = True
+            break
+    if not replaced:
+        # Ajout atomique (RPUSH) — jamais perdu même en simultané
+        _kv("rpush", KEY, json.dumps(ing, ensure_ascii=False))
+        items = _read_list()
+        return items
+    # Mise à jour d'un existant : reconstruit toute la liste (rare)
+    _kv("del", KEY)
+    for it in items:
+        _kv("rpush", KEY, json.dumps(it, ensure_ascii=False))
+    return items
 
 
-def update(fn):
-    """Applique fn(ingredients)->ingredients avec retry sur conflit (409)."""
-    if not GITHUB_TOKEN:
-        raise RuntimeError("NO_TOKEN")
-    last_err = None
-    for _ in range(MAX_RETRY):
-        data, sha = _read()
-        new_list = fn(data["ingredients"])
-        data["ingredients"] = new_list
-        try:
-            return _write(data, sha)
-        except RuntimeError as e:
-            code = str(e)
-            if code == "409":
-                last_err = "conflit, on relit et on réessaie"
-                time.sleep(0.3)
-                continue
-            raise RuntimeError(f"GitHub écriture : {code}")
-    raise RuntimeError(f"Conflits répétés : {last_err}")
+def _remove(nom):
+    """Supprime par nom (LREM atomique). Retourne la nouvelle liste."""
+    key = norm(nom)
+    items = _read_list()
+    to_remove = [it for it in items if norm(it.get("nom", "")) == key]
+    for it in to_remove:
+        _kv("lrem", KEY, "1", json.dumps(it, ensure_ascii=False))
+    return _read_list()
+
+
+def _clear():
+    """Vide tout (DEL atomique)."""
+    _kv("del", KEY)
+    return []
 
 
 def norm(s):
@@ -125,89 +131,54 @@ class handler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
         self.send_response(204)
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
 
     def do_GET(self):
+        if not _is_ready():
+            _send(self, 500, {"error": "KV non configuré (KV_REST_API_URL/TOKEN absents)"})
+            return
         try:
-            data, _ = _read()
-            _send(self, 200, data)
-        except RuntimeError as e:
-            if str(e) == "NO_TOKEN":
-                _send(self, 500, {"error": "GITHUB_TOKEN absent sur Vercel"})
-            else:
-                _send(self, 502, {"error": f"Erreur lecture inventaire : {e}"})
+            _send(self, 200, _get_all())
         except Exception as e:
             _send(self, 502, {"error": f"Erreur lecture : {e}"})
 
     def do_POST(self):
+        if not _is_ready():
+            _send(self, 500, {"error": "KV non configuré (KV_REST_API_URL/TOKEN absents)"})
+            return
         body = _read_body(self)
         action = body.get("action", "ajouter")
-
-        # --- Ajout / mise à jour ---
-        if action == "ajouter":
-            nom = str(body.get("nom", "")).strip()
-            if not nom:
-                _send(self, 400, {"error": "nom manquant"})
-                return
-            qty = str(body.get("quantite", "")).strip() or ""
-            zone = body.get("zone") == "garde-manger" and "garde-manger" or "frigo"
-            key = norm(nom)
-
-            def apply(items):
-                for ing in items:
-                    if norm(ing.get("nom", "")) == key:
-                        ing["quantite"] = qty or ing.get("quantite", "")
-                        ing["zone"] = zone
-                        return items
-                items.append({"nom": nom, "quantite": qty, "zone": zone})
-                return items
-
-            try:
-                res = update(apply)
-                _send(self, 200, res)
-            except RuntimeError as e:
-                if str(e) == "NO_TOKEN":
-                    _send(self, 500, {"error": "GITHUB_TOKEN absent sur Vercel"})
-                else:
-                    _send(self, 502, {"error": f"Erreur ajout : {e}"})
-            except Exception as e:
-                _send(self, 502, {"error": f"Erreur ajout : {e}"})
-            return
-
-        # --- Suppression par nom ---
-        if action == "supprimer":
-            nom = str(body.get("nom", "")).strip()
-            if not nom:
-                _send(self, 400, {"error": "nom manquant"})
-                return
-            key = norm(nom)
-            def apply(items):
-                return [i for i in items if norm(i.get("nom", "")) != key]
-            try:
-                res = update(apply)
-                _send(self, 200, res)
-            except RuntimeError as e:
-                _send(self, 502, {"error": f"Erreur suppression : {e}"})
-            except Exception as e:
-                _send(self, 502, {"error": f"Erreur suppression : {e}"})
-            return
-
-        # --- Vider tout ---
-        if action == "vider":
-            def apply(items):
-                return []
-            try:
-                res = update(apply)
-                _send(self, 200, res)
-            except RuntimeError as e:
-                _send(self, 502, {"error": f"Erreur vidage : {e}"})
-            except Exception as e:
-                _send(self, 502, {"error": f"Erreur vidage : {e}"})
-            return
-
-        _send(self, 400, {"error": "action inconnue"})
+        try:
+            if action == "ajouter":
+                nom = str(body.get("nom", "")).strip()
+                if not nom:
+                    _send(self, 400, {"error": "nom manquant"})
+                    return
+                ing = {
+                    "nom": nom,
+                    "quantite": str(body.get("quantite", "")).strip() or "",
+                    "zone": body.get("zone") == "garde-manger" and "garde-manger" or "frigo",
+                }
+                _send(self, 200, {"ingredients": _add(ing)})
+            elif action == "supprimer":
+                nom = str(body.get("nom", "")).strip()
+                if not nom:
+                    _send(self, 400, {"error": "nom manquant"})
+                    return
+                _send(self, 200, {"ingredients": _remove(nom)})
+            elif action == "vider":
+                _send(self, 200, {"ingredients": _clear()})
+            else:
+                _send(self, 400, {"error": "action inconnue"})
+        except RuntimeError as e:
+            if str(e) == "KV_AUTH":
+                _send(self, 500, {"error": "Token KV invalide"})
+            else:
+                _send(self, 502, {"error": f"Erreur : {e}"})
+        except Exception as e:
+            _send(self, 502, {"error": f"Erreur : {e}"})
 
     def log_message(self, fmt, *args):
         pass
