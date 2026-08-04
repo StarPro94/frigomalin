@@ -24,6 +24,11 @@
       "nom": "poulet",
       "quantite": "",
       "zone": "frigo"
+    },
+    {
+      "nom": "riz",
+      "quantite": "",
+      "zone": "garde-manger"
     }
   ]
 }
