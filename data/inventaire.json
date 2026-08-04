@@ -14,6 +14,11 @@
       "nom": "pates",
       "quantite": "500g",
       "zone": "garde-manger"
+    },
+    {
+      "nom": "pommes",
+      "quantite": "4",
+      "zone": "frigo"
     }
   ]
 }
