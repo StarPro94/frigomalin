@@ -4,6 +4,11 @@
       "nom": "pommes",
       "quantite": "1",
       "zone": "frigo"
+    },
+    {
+      "nom": "oeufs",
+      "quantite": "1",
+      "zone": "frigo"
     }
   ]
 }
