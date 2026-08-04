@@ -1,14 +1,3 @@
 {
-  "ingredients": [
-    {
-      "nom": "pommes",
-      "quantite": "4",
-      "zone": "frigo"
-    },
-    {
-      "nom": "oeufs",
-      "quantite": "6",
-      "zone": "frigo"
-    }
-  ]
+  "ingredients": []
 }
