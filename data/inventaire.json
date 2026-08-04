@@ -14,11 +14,6 @@
       "nom": "tomates",
       "quantite": "3",
       "zone": "frigo"
-    },
-    {
-      "nom": "pommes",
-      "quantite": "4",
-      "zone": "frigo"
     }
   ]
 }
