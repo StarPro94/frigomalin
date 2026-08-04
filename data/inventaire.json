@@ -9,6 +9,11 @@
       "nom": "oeufs",
       "quantite": "6",
       "zone": "frigo"
+    },
+    {
+      "nom": "tomates",
+      "quantite": "3",
+      "zone": "frigo"
     }
   ]
 }
