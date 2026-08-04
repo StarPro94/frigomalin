@@ -9,6 +9,11 @@
       "nom": "tomates",
       "quantite": "3",
       "zone": "frigo"
+    },
+    {
+      "nom": "pates",
+      "quantite": "500g",
+      "zone": "garde-manger"
     }
   ]
 }
