@@ -57,5 +57,6 @@ frigo-malin/
 - [x] **Tri urgent dans le filtre Péremption** — V3.12 : dans « ⚠️ Péremption », ce qui presse (périmé → à consommer → par date) remonte en haut de liste, fini l'ordre alphabétique illisible
 - [x] **Validation d'entrée & erreurs HTTP propres** — V3.13 : mode inconnu, JSON malformé ou champ mal typé → réponse **HTTP 400** claire avant d'appeler DeepSeek (plus d'erreur avalée ni d'appel IA gaspillé)
 - [x] **Ajout d'un manquant en un geste (＋)** — V3.14 : dans la fiche recette, un appui sur le ＋ d'un « Il manque » l'ajoute directement aux réserves (frigo), sans doublon
+- [x] **Partager une recette (↗)** — V3.15 : bouton dans la fiche → partage natif mobile ou copie de la recette (titre, ingrédients, étapes, astuce) dans le presse-papiers, pour envoyer le menu du soir
 
 _Le projet évolue automatiquement (cron d'amélioration continue)._

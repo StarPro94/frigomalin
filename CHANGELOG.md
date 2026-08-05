@@ -1,5 +1,9 @@
 # CHANGELOG — FrigoMalin
 
+## V3.15 (2026-08-05) — Partager une recette ↗
+- Dans la fiche recette, nouveau bouton **« ↗ Partager »** : sur mobile, ouvre le menu de partage natif (messages, mail, etc.) ; sur ordinateur (ou si partage natif indisponible), copie la recette en texte dans le presse-papiers — titre, style, durées, ingrédients dispo/manquants, étapes et astuce, avec l'entête « proposé par FrigoMalin ». Pratique pour envoyer le menu du soir à l'autre.
+- 2026-08-05 22:28 — Bouton Partager (partage natif mobile + copie presse-papiers en secours) + déploiement Vercel.
+
 ## V3.14 (2026-08-05) — « C'est à la maison » : ajouter un manquant en un geste
 - Dans la fiche recette, chaque ingrédient de la liste **« Il manque »** a désormais un petit **＋** : un appui l'ajoute directement aux **réserves (frigo)**, en évitant les doublons. Plus besoin de recopier ou de ranger à la main ce qui manque — on clique et c'est rayé du manquant.
 - 2026-08-05 21:50 — Ajout rapide d'un manquant depuis la fiche recette + déploiement Vercel.

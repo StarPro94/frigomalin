@@ -430,6 +430,37 @@ function majBtnFav(){
     b.classList.toggle("btn-tomate",fav);b.classList.toggle("btn-ligne",!fav);
   }
 }
+// ---------- Partage ----------
+function partagerRecette(r){
+  const lignes=[];
+  lignes.push("🍳 "+(r.titre||"Recette"));
+  if(r.style)lignes.push(r.style);
+  const meta=[r.temps,r.difficulte,(r.parts?r.parts+" pers.":"")].filter(Boolean).join(" · ");
+  if(meta)lignes.push(meta);
+  lignes.push("");
+  const dispo=r.ingredients_dispo_utilises||[];
+  if(dispo.length){lignes.push("On a déjà :");dispo.forEach(x=>lignes.push("• "+x));lignes.push("");}
+  const manq=r.ingredients_manquants||[];
+  if(manq.length){lignes.push("Il manque :");manq.forEach(x=>lignes.push("• "+x));lignes.push("");}
+  lignes.push("Étapes :");
+  (r.etapes||[]).forEach((x,i)=>lignes.push((i+1)+". "+x));
+  if(r.astuce)lignes.push("","💡 "+r.astuce);
+  lignes.push("","— proposé par FrigoMalin 🍳");
+  const texte=lignes.join("\n");
+  const valide=()=>{const b=$("btnPartager");if(b){const old=b.textContent;b.textContent="✓ Copié !";setTimeout(()=>{b.textContent=old;},2000);}};
+  if(navigator.share){
+    navigator.share({title:r.titre||"Recette FrigoMalin",text:texte}).then(valide).catch(()=>{});
+    return;
+  }
+  // Secours : copie dans le presse-papiers
+  const copie=()=>{
+    if(navigator.clipboard&&navigator.clipboard.writeText){return navigator.clipboard.writeText(texte);}
+    const ta=document.createElement("textarea");ta.value=texte;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+    let ok=true;try{ok=document.execCommand("copy");}catch(e){ok=false;}ta.remove();
+    return ok?Promise.resolve():Promise.reject(new Error("copy"));
+  };
+  copie().then(valide).catch(()=>alert("Partage indisponible sur cet appareil."));
+}
 function renderCarnet(){
   const box=$("listeCarnet");box.innerHTML="";
   const favC=$("btnFavOnly"),favN=$("favCompte");
@@ -490,6 +521,7 @@ function ouvreFiche(r){
     <div class="barre-action">
       <button class="btn btn-ligne" id="btnTimer">Minuteur 10 min</button>
       <button class="btn btn-ligne" id="btnFav">❤️ Mettre en favori</button>
+      <button class="btn btn-ligne" id="btnPartager">↗ Partager</button>
       <button class="btn btn-tomate" id="btnGarder">⭐ Garder ce plat</button>
     </div>`;
   $("btnFermerFiche").addEventListener("click",closeFiche);
@@ -500,6 +532,7 @@ function ouvreFiche(r){
   $("btnTimer").addEventListener("click",demarrerMinuteur);
   $("btnGarder").addEventListener("click",()=>{garderAuCarnet(r);});
   const bf=$("btnFav");if(bf){bf.dataset.t=(r.titre)||"";bf.addEventListener("click",()=>toggleFavori(r));majBtnFav();}
+  const bp=$("btnPartager");if(bp)bp.addEventListener("click",()=>partagerRecette(r));
   // « C'est à la maison » : un simple + sur un manquant l'ajoute aux réserves (frigo)
   f.querySelectorAll(".btn-add-manq").forEach(btn=>{
     btn.addEventListener("click",async()=>{
