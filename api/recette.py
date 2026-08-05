@@ -65,14 +65,47 @@ def _send(h, code, obj):
     h.wfile.write(body)
 
 
+class BadRequest(Exception):
+    """Entrée invalide côté client → réponse HTTP 400."""
+
+
 def _read_body(h):
     try:
         length = int(h.headers.get("Content-Length", 0) or 0)
         if length <= 0:
             return {}
-        return json.loads(h.rfile.read(length).decode("utf-8") or "{}")
+        raw = h.rfile.read(length).decode("utf-8") or "{}"
+        data = json.loads(raw)
+        if not isinstance(data, dict):
+            raise BadRequest("Le corps de la requête doit être un objet JSON.")
+        return data
+    except BadRequest:
+        raise
     except Exception:
-        return {}
+        raise BadRequest("Corps de requête JSON invalide.")
+
+
+def _valider_entree(body):
+    """Vérifie les champs connus : mode connu, listes typées.
+
+    Renvoie 400 avec un message clair plutôt que de générer une recette
+    avec des valeurs par défaut silencieuses (le bug silencieux coûte
+    un appel DeepSeek inutile et masque les vrais problèmes).
+    """
+    mode = body.get("mode", "gourmand")
+    if mode not in MODES:
+        raise BadRequest(
+            "Mode inconnu : %r. Modes possibles : %s."
+            % (mode, ", ".join(sorted(MODES)))
+        )
+    for champ in ("ingredients", "bases", "exclusions", "messages"):
+        v = body.get(champ)
+        if v is not None and not isinstance(v, list):
+            raise BadRequest("Le champ '%s' doit être une liste." % champ)
+    for champ in ("duree_max", "parts"):
+        v = body.get(champ)
+        if v is not None and not isinstance(v, (int, float)):
+            raise BadRequest("Le champ '%s' doit être un nombre." % champ)
 
 
 def _call(prompt, temperature=0.8):
@@ -263,7 +296,12 @@ class handler(BaseHTTPRequestHandler):
             _send(self, 500, {"error": "Clé DeepSeek absente"})
             return
         path = self.path.split("?")[0]
-        body = _read_body(self)
+        try:
+            body = _read_body(self)
+            _valider_entree(body)
+        except BadRequest as e:
+            _send(self, 400, {"ok": False, "error": str(e)})
+            return
         try:
             if path == "/api/chat":
                 r = chat(body)

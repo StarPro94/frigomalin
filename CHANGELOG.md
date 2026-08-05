@@ -1,5 +1,9 @@
 # CHANGELOG — FrigoMalin
 
+## V3.13 (2026-08-05) — Validation des entrées & erreurs HTTP propres
+- Backend : les requêtes sont désormais **validées** avant d'appeler DeepSeek. Mode inconnu, JSON malformé, corps non-objet ou champ mal typé → réponse **HTTP 400** claire en français, au lieu de générer discrètement une recette avec des valeurs par défaut ou d'avaler silencieusement l'erreur. Plus d'appel IA gaspillé sur une entrée invalide.
+- 2026-08-05 21:26 — Validation d'entrée + erreurs 400 propres côté `/api/recette` + déploiement Vercel.
+
 ## V3.12 (2026-08-04) — Tri urgent dans le filtre Péremption
 - Réserves : dans le filtre « ⚠️ Péremption », les ingrédients s'affichent désormais par ordre d'urgence (périmés d'abord, puis « à consommer », puis par date limite) au lieu de l'ordre alphabétique — on voit en un coup d'œil ce qu'il faut cuisiner en priorité.
 - 2026-08-04 19:57 — Tri par urgence dans le filtre Péremption + déploiement Vercel.
