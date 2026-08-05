@@ -1,5 +1,9 @@
 # CHANGELOG — FrigoMalin
 
+## V3.14 (2026-08-05) — « C'est à la maison » : ajouter un manquant en un geste
+- Dans la fiche recette, chaque ingrédient de la liste **« Il manque »** a désormais un petit **＋** : un appui l'ajoute directement aux **réserves (frigo)**, en évitant les doublons. Plus besoin de recopier ou de ranger à la main ce qui manque — on clique et c'est rayé du manquant.
+- 2026-08-05 21:50 — Ajout rapide d'un manquant depuis la fiche recette + déploiement Vercel.
+
 ## V3.13 (2026-08-05) — Validation des entrées & erreurs HTTP propres
 - Backend : les requêtes sont désormais **validées** avant d'appeler DeepSeek. Mode inconnu, JSON malformé, corps non-objet ou champ mal typé → réponse **HTTP 400** claire en français, au lieu de générer discrètement une recette avec des valeurs par défaut ou d'avaler silencieusement l'erreur. Plus d'appel IA gaspillé sur une entrée invalide.
 - 2026-08-05 21:26 — Validation d'entrée + erreurs 400 propres côté `/api/recette` + déploiement Vercel.

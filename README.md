@@ -56,5 +56,6 @@ frigo-malin/
 - [x] **Favoris de recettes** — V3.11 : bouton « ❤️ Mettre en favori » dans la fiche, filtre « ❤️ Favoris » au carnet pour ne voir que les plats qu'on adore
 - [x] **Tri urgent dans le filtre Péremption** — V3.12 : dans « ⚠️ Péremption », ce qui presse (périmé → à consommer → par date) remonte en haut de liste, fini l'ordre alphabétique illisible
 - [x] **Validation d'entrée & erreurs HTTP propres** — V3.13 : mode inconnu, JSON malformé ou champ mal typé → réponse **HTTP 400** claire avant d'appeler DeepSeek (plus d'erreur avalée ni d'appel IA gaspillé)
+- [x] **Ajout d'un manquant en un geste (＋)** — V3.14 : dans la fiche recette, un appui sur le ＋ d'un « Il manque » l'ajoute directement aux réserves (frigo), sans doublon
 
 _Le projet évolue automatiquement (cron d'amélioration continue)._
