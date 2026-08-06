@@ -1,6 +1,6 @@
 /* FrigoMalin — service worker : cache de l'app pour un démarrage instantané et un usage hors-ligne.
    L'API (/api/recette) n'est volontairement PAS mise en cache : elle doit toujours être fraîche. */
-const CACHE = "frigomalin-v3";
+const CACHE = "frigomalin-v4";
 const ASSETS = ["/", "/index.html", "/manifest.webmanifest", "/icon.svg"];
 
 self.addEventListener("install", (e) => {
@@ -21,6 +21,7 @@ self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
   if (e.request.method !== "GET" || url.origin !== location.origin) return;
   if (url.pathname.startsWith("/api/")) return; // toujours en réseau (fraîcheur)
+  if (url.pathname.startsWith("/api")) return; // toujours en réseau (fraîcheur)
 
   // Cache d'abord, réseau en secours (hors-ligne : on sert la copie).
   e.respondWith(

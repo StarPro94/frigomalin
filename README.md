@@ -38,6 +38,7 @@ frigo-malin/
 | `/api/recette` | POST | `{mode, duree, ingredients}` → recette IA |
 
 ## Roadmap (améliorations continues)
+- [x] **PWA : API jamais mise en cache (correction)** — V3.39 : le service worker ne mettait en cache que les chemins commençant par `/api/` — les routes `/api/recette`, `/api/inventaire`, `/api/chat` (sans slash final) n'étaient pas exclues et pouvaient être servies en copie périmée, même en ligne (inventaire qui ne se rafraîchit plus, recettes fantômes) ; la garde couvre désormais tout chemin commençant par `/api` + cache service worker rafraîchi (v4)
 - [x] **Robustesse du chat recette** — V3.37 : `api/chat.py` aligné sur `api/recette.py` (entrée validée → 400 clair, parsing JSON équilibré, retry ×3, budget temporel → 504, réponse réassainie)
 - [x] Export / import inventaire
 - [x] **Stockage partagé Redis** (même frigo sur tous les appareils, atomique, aucune perte) — V2
