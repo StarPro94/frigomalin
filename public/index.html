@@ -716,7 +716,7 @@ function openSheet(which){
     $("sClose").addEventListener("click",fermerSheet);
   }else if(which==="envie"){
     b.innerHTML=`<div class="sheet-head"><h3>Changer l'envie</h3><button class="sheet-close" id="sClose">✕</button></div>
-      <div class="bloc-contrainte"><div class="lab">Style</div><div class="chips" id="zM">${["healthy","gourmand","gras","sportif","surprise"].map(x=>`<button class="chip ${appState.mode===x?"on":""}" data-m="${x}">${x}</button>`).join("")}</div></div>
+      <div class="bloc-contrainte"><div class="lab">Style</div><div class="chips" id="zM">${[["healthy","healthy"],["gourmand","gourmand"],["gras","gras"],["sportif","sportif"],["veggie","🥬 végétarien"],["surprise","surprise"]].map(([k,l])=>`<button class="chip ${appState.mode===k?"on":""}" data-m="${k}">${l}</button>`).join("")}</div></div>
       <div class="bloc-contrainte"><div class="lab">Difficulté max</div><div class="chips" id="zD">${["facile","moyen","difficile"].map(x=>`<button class="chip ${appState.difficulte_max===x?"on":""}" data-d="${x}">${x}</button>`).join("")}</div></div>
       <div class="bloc-contrainte"><div class="lab">Durée max (minutes)</div><div class="duree-row"><input type="number" id="sDuree" min="5" max="180" value="${appState.duree_max}"><span class="dur-min">min</span></div></div>
       <div class="bloc-contrainte"><div class="lab">Parts (par défaut 2)</div><div class="duree-row"><input type="number" id="sParts" min="1" max="12" value="${appState.parts}"><span class="dur-min">personnes</span></div></div>

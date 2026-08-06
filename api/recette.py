@@ -35,6 +35,9 @@ MODES = {
     "gourmand": "gourmand : réconfortant, savoureux, généreux",
     "gras": "gras : indulgente, riche, réconfortante",
     "sportif": "sportif : riche en protéines, adapté à l'effort",
+    "veggie": "végétarien : sans viande ni poisson, à base de légumes, œufs, "
+              "produits laitiers et légumineuses (respecte STRICTEMENT : aucun "
+              "ingrédient carné, ni utilisé ni manquant)",
     "surprise": "surprise : laisse-toi guider, sois créatif et original, "
                  "varie totalement selon les ingrédients (aucune contrainte de style)",
 }

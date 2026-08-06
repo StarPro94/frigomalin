@@ -1,5 +1,8 @@
 # CHANGELOG — FrigoMalin
 
+## V3.26 (2026-08-06) — Mode « Végétarien » 🥬
+- 2026-08-06 10:38 — Nouveau mode « 🥬 Végétarien » (sans viande ni poisson) dans « Changer l'envie », appliqué strictement par le chef (aucun ingrédient carné ni utilisé ni manquant) + déploiement Vercel.
+
 ## V3.25 (2026-08-06) — Recette robuste face aux réponses IA 🛡️
 - 2026-08-06 10:23 — Normalisation serveur des réponses IA (listes/parts/difficulté bornées) + déploiement Vercel.
 - Backend : chaque recette renvoyée par l'IA est **réassainie** avant d'atteindre l'écran — les listes (`étapes`, `ingrédients dispo`, `manquants`) sont toujours des listes (l'IA a pu les renvoyer en texte ou en virgules → elles sont découpées), le nombre de `parts` est forcé en entier borné (1-24) et les niveaux de difficulté harmonisés (« moyenne » → « Moyenne »). Fini la fiche recette qui peut casser si le modèle dévie du format attendu.

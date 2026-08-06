@@ -68,5 +68,6 @@ frigo-malin/
 - [x] **Étapes de cuisson cochables** — V3.23 : chaque étape de la recette se coche d'un appui (✓ barré), avec un compteur de progression (« 3/7 ») et un bouton « ↺ réinitialiser » — ne plus perdre le fil en cuisine
 - [x] **Minuteur qui sonne** — V3.24 : à la fin du décompte, 3 bips (WebAudio) + vibration mobile + pulsation rouge « Terminé ! » — impossible de rater la fin de cuisson
 - [x] **Recette robuste face aux réponses IA** — V3.25 : le serveur réassainit chaque recette avant l'écran (étapes/listes toujours en liste, `parts` bornées 1-24, difficulté harmonisée) — la fiche ne casse plus si le modèle dévie du format
+- [x] **Mode « Végétarien »** — V3.26 : contrainte « 🥬 Végétarien » dans « Changer l'envie » → le chef compose sans viande ni poisson (ni en ingrédient utilisé ni en manquant), pour les soirs où on veut un repas sans carné
 
 _Le projet évolue automatiquement (cron d'amélioration continue)._
