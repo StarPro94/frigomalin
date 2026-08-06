@@ -476,6 +476,23 @@ function partagerRecette(r){
   };
   copie().then(valide).catch(()=>alert("Partage indisponible sur cet appareil."));
 }
+// ---------- Liste de courses ----------
+function copierTexte(texte){
+  if(navigator.clipboard&&navigator.clipboard.writeText)return navigator.clipboard.writeText(texte);
+  const ta=document.createElement("textarea");ta.value=texte;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+  let ok=true;try{ok=document.execCommand("copy");}catch(e){ok=false;}ta.remove();
+  return ok?Promise.resolve():Promise.reject(new Error("copy"));
+}
+function listeCourses(r){
+  const manq=r.ingredients_manquants||[];
+  const b=$("btnCourses");
+  const flash=t=>{if(b){const old=b.textContent;b.textContent=t;setTimeout(()=>{b.textContent=old;},2000);}};
+  if(!manq.length){flash("✓ Tout est là !");return;}
+  const lignes=["🛒 Liste de courses — "+(r.titre||"Recette"),""];
+  manq.forEach(x=>lignes.push("• "+x));
+  lignes.push("","— FrigoMalin 🍳");
+  copierTexte(lignes.join("\n")).then(()=>flash("✓ Copiée !")).catch(()=>alert("Copie indisponible sur cet appareil."));
+}
 function renderCarnet(){
   const box=$("listeCarnet");box.innerHTML="";
   const favC=$("btnFavOnly"),favN=$("favCompte");
@@ -537,6 +554,7 @@ function ouvreFiche(r){
       <button class="btn btn-ligne" id="btnTimer">Minuteur 10 min</button>
       <button class="btn btn-ligne" id="btnFav">❤️ Mettre en favori</button>
       <button class="btn btn-ligne" id="btnPartager">↗ Partager</button>
+      <button class="btn btn-ligne" id="btnCourses">🛒 Liste de courses</button>
       <button class="btn btn-tomate" id="btnGarder">⭐ Garder ce plat</button>
     </div>`;
   $("btnFermerFiche").addEventListener("click",closeFiche);
@@ -548,6 +566,7 @@ function ouvreFiche(r){
   $("btnGarder").addEventListener("click",()=>{garderAuCarnet(r);});
   const bf=$("btnFav");if(bf){bf.dataset.t=(r.titre)||"";bf.addEventListener("click",()=>toggleFavori(r));majBtnFav();}
   const bp=$("btnPartager");if(bp)bp.addEventListener("click",()=>partagerRecette(r));
+  const bc=$("btnCourses");if(bc)bc.addEventListener("click",()=>listeCourses(r));
   // « C'est à la maison » : un simple + sur un manquant l'ajoute aux réserves (frigo)
   f.querySelectorAll(".btn-add-manq").forEach(btn=>{
     btn.addEventListener("click",async()=>{

@@ -1,5 +1,9 @@
 # CHANGELOG — FrigoMalin
 
+## V3.19 (2026-08-06) — Liste de courses 🛒
+- Dans la fiche recette, nouveau bouton **« 🛒 Liste de courses »** : un appui copie d'un coup tous les ingrédients manquants en liste prête pour les courses (avec le titre du plat en entête). Si tout est à la maison, le bouton affiche « ✓ Tout est là ! ». Pratique pour faire les courses sans recopier.
+- 2026-08-06 03:50 — Liste de courses (copie des manquants depuis la fiche) + déploiement Vercel.
+
 ## V3.18 (2026-08-06) — Recherche intelligente dans les réserves 🔍
 - Réserves : la recherche ignore désormais les **accents et la casse** (« creme » trouve « Crème fraîche », « oeuf » trouve « Œufs », « EPINARDS » trouve « Épinards ») et cherche aussi dans la **quantité/état** (« fond » trouve « un fond de crème »). Au passage, la déduplication des doublons (ajout d'un ingrédient déjà présent) tolère elle aussi les accents.
 - 2026-08-06 02:05 — Recherche insensible aux accents/ligatures + recherche dans la quantité + dédup corrigée, déploiement Vercel.
