@@ -63,5 +63,6 @@ frigo-malin/
 - [x] **Recherche intelligente dans les réserves** — V3.18 : la recherche ignore accents et casse (« creme » → « Crème », « oeuf » → « Œufs »), matche aussi la quantité/état (« fond » → « un fond de crème »), et la déduplication des doublons tolère les accents
 - [x] **Liste de courses** — V3.19 : bouton « 🛒 Liste de courses » dans la fiche recette → copie tous les ingrédients manquants en une liste prête pour les courses (« ✓ Tout est là ! » si rien ne manque)
 - [x] **« Une autre idée » vraiment différente** — V3.20 : le bouton « Une autre idée » exclut côté serveur les plats déjà proposés (param `eviter_plats`), fini de retomber deux fois sur la même recette
+- [x] **Mode « Sans courses »** — V3.21 : toggle « 🚫 Sans courses » dans « Changer l'envie » → recette composée uniquement avec ce qu'on a (liste « Il manque » vide, seuls sel/poivre/huile/épices tolérés), vérifié et régénéré côté serveur si l'IA propose un achat, choix mémorisé
 
 _Le projet évolue automatiquement (cron d'amélioration continue)._

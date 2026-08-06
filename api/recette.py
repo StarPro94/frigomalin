@@ -112,6 +112,8 @@ def _valider_entree(body):
         v = body.get(champ)
         if v is not None and not isinstance(v, (int, float)):
             raise BadRequest("Le champ '%s' doit être un nombre." % champ)
+    if body.get("sans_courses") is not None and not isinstance(body.get("sans_courses"), bool):
+        raise BadRequest("Le champ 'sans_courses' doit être un booléen.")
 
 
 class BudgetDepasse(Exception):
@@ -207,7 +209,21 @@ def build_constraints(mode, duree_max, difficulte_max, parts):
     return "\n".join(lines) if lines else ""
 
 
-def build_generate_prompt(ingredients, bases, exclusions, mode, duree_max, difficulte_max, parts, eviter_plats=None):
+# Assaisonnements de base qu'on a presque toujours : en mode « sans courses »,
+# ils ne comptent pas comme « ingrédients manquants » à acheter.
+BASES_TOLEREES = (
+    "sel", "poivre", "huile", "vinaigre", "moutarde", "sucre", "farine",
+    "beurre", "ail", "oignon", "échalote", "echalote", "épice", "epice",
+    "herbe", "laurier", "thym", "romarin", "origan", "bouillon", "citron",
+)
+
+
+def est_assaisonnement(m):
+    mm = str(m or "").lower().strip()
+    return any(k in mm for k in BASES_TOLEREES)
+
+
+def build_generate_prompt(ingredients, bases, exclusions, mode, duree_max, difficulte_max, parts, eviter_plats=None, sans_courses=False):
     dispo = ", ".join(ingredients) if ingredients else "AUCUN renseigné"
     tout = ", ".join(bases) if bases else ""
     excl = ""
@@ -218,11 +234,17 @@ def build_generate_prompt(ingredients, bases, exclusions, mode, duree_max, diffi
     if eviter_plats:
         evite = (f"\nIMPORTANT : ne propose SURTOUT PAS ces plats (déjà proposés tout à l'heure, on n'en veut pas) : "
                  f"{', '.join(eviter_plats)}. Trouve une idée vraiment différente.")
+    sc = ""
+    if sans_courses:
+        sc = ("\nIMPORTANT : mode SANS COURSES — utilise UNIQUEMENT les ingrédients disponibles, "
+              "ne propose AUCUN ingrédient à acheter. La liste 'ingredients_manquants' doit être VIDE "
+              "(seuls les assaisonnements de base comme sel, poivre, huile ou épices sont tolérés, "
+              "car on les a presque toujours). Compose avec ce qu'on a, même si c'est simple.")
     bases_s = f"\nBases qu'on a presque toujours (à utiliser si besoin, sans les lister comme manquants) : {tout}." if tout else ""
     c = build_constraints(mode, duree_max, difficulte_max, parts)
     return f"""
 Contexte : je cuisine pour ma famille avec ce que j'ai.
-Ingrédients disponibles : {dispo}.{bases_s}{excl}{evite}
+Ingrédients disponibles : {dispo}.{bases_s}{excl}{evite}{sc}
 
 Contraintes (à respecter IMPÉRATIVEMENT) : {c}
 
@@ -242,20 +264,31 @@ def generate(body):
     difficulte_max = str(body.get("difficulte_max", "difficile"))
     parts = body.get("parts")
     parts = int(parts) if isinstance(parts, (int, float)) and parts > 0 else 2
+    sans_courses = body.get("sans_courses") is True
 
     # on essaie jusqu'à 3 fois, en durcissant la consigne durée si dépassé
     deadline = time.time() + GLOBAL_TIMEOUT
-    prompt = build_generate_prompt(ingredients, bases, exclusions, mode, duree_max, difficulte_max, parts, eviter_plats)
+    prompt = build_generate_prompt(ingredients, bases, exclusions, mode, duree_max, difficulte_max, parts, eviter_plats, sans_courses)
     for attempt in range(3):
         raw = _call(prompt, deadline=deadline)
         r = parse_recette(raw)
         if duree_max:
             mn = minutes_from(r.get("temps"))
             if mn is not None and mn > duree_max:
-                prompt = build_generate_prompt(ingredients, bases, exclusions, mode, duree_max, difficulte_max, parts, eviter_plats) + (
+                prompt = build_generate_prompt(ingredients, bases, exclusions, mode, duree_max, difficulte_max, parts, eviter_plats, sans_courses) + (
                     f"\n\nATTENTION : la recette précedente durait {r.get('temps')}, ce qui dépasse la limite de "
                     f"{duree_max} min. Réponds avec une recette VRAIMENT plus courte, simple et rapide. "
                     f"Le 'temps' doit être <= {duree_max} minutes (par exemple {max(5, duree_max // 3)}-{duree_max} minutes)."
+                )
+                continue
+        if sans_courses:
+            manquants = [m for m in (r.get("ingredients_manquants") or []) if not est_assaisonnement(m)]
+            if manquants:
+                prompt = build_generate_prompt(ingredients, bases, exclusions, mode, duree_max, difficulte_max, parts, eviter_plats, sans_courses) + (
+                    "\n\nATTENTION : en mode SANS COURSES tu as proposé d'acheter : "
+                    + ", ".join(manquants[:5])
+                    + ". C'est interdit. Refais une recette avec UNIQUEMENT les ingrédients disponibles, "
+                    "et mets 'ingredients_manquants' à une liste VIDE."
                 )
                 continue
         if not r.get("titre"):

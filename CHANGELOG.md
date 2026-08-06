@@ -1,5 +1,9 @@
 # CHANGELOG — FrigoMalin
 
+## V3.21 (2026-08-06) — Mode « Sans courses » 🚫
+- Dans « Changer l'envie », nouveau toggle **« 🚫 Sans courses — uniquement ce qu'on a »** : le chef doit composer la recette **uniquement avec les ingrédients disponibles**, liste « Il manque » vide (seuls sel, poivre, huile et épices de base sont tolérés). S'il propose quand même un achat, le serveur le reprend et régénère. Badge « 🚫 sans courses » dans la fiche, rappel « rien à acheter » sur Ce soir. Le choix est mémorisé sur le téléphone.
+- 2026-08-06 05:57 — Mode « Sans courses » (contrainte stricte côté serveur + toggle mémorisé + vérification/régénération) + déploiement Vercel.
+
 ## V3.20 (2026-08-06) — « Une autre idée » vraiment différente 🔄
 - Bouton **« Une autre idée »** sur « Ce soir » : le plat déjà proposé (et les suivants) est désormais **exclu côté serveur** — plus de risque de retomber deux fois sur la même recette. Le backend accepte une liste `eviter_plats` et interdit explicitement à l'IA de les reproposer.
 - 2026-08-06 04:40 — « Une autre idée » exclut les plats déjà proposés (param `eviter_plats`) + déploiement Vercel.

@@ -284,9 +284,9 @@
 
 <script>
 // ---------- État ----------
-const LS_C="office_carnet",LS_U="office_user",LS_T="office_theme",LS_F="office_favoris";
+const LS_C="office_carnet",LS_U="office_user",LS_T="office_theme",LS_F="office_favoris",LS_SC="office_sanscourses";
 const appState={view:"today",user:localStorage.getItem(LS_U)||"patrick",theme:localStorage.getItem(LS_T)==="night"?"night":"day",inventory:[],zone:"frigo",filtre:"tous",
-  mode:"gourmand",duree_max:20,difficulte_max:"facile",parts:2,excl:[],eviterPlats:[],
+  mode:"gourmand",duree_max:20,difficulte_max:"facile",parts:2,excl:[],eviterPlats:[],sansCourses:localStorage.getItem(LS_SC)==="1",
   suggestion:null,carnet:JSON.parse(localStorage.getItem(LS_C)||"[]"),favoris:JSON.parse(localStorage.getItem(LS_F)||"[]"),favOnly:false,timer:null,recogOn:null,chatMsgs:[],_recetteChat:null,carnetQ:"",
   bases:[
     "sel","poivre","huile d'olive","beurre","ail","oignon","échalote","vinaigre","moutarde","sauce soja","sucre","farine","bouillon de légumes","bouillon de volaille",
@@ -366,12 +366,14 @@ async function generer(){
   $("platTitre").textContent="Je regarde ce qu'il reste…";$("platMetas").innerHTML="";$("platJustif").textContent="";
   const ingredients=[...appState.inventory.map(i=>i.nom)];
   try{
-    const d=await api("/api/recette",j({mode:appState.mode,duree_max:appState.duree_max,difficulte_max:appState.difficulte_max,parts:appState.parts,ingredients,bases:appState.basesOn,exclusions:appState.excl,eviter_plats:appState.eviterPlats}));
+    const d=await api("/api/recette",j({mode:appState.mode,duree_max:appState.duree_max,difficulte_max:appState.difficulte_max,parts:appState.parts,ingredients,bases:appState.basesOn,exclusions:appState.excl,eviter_plats:appState.eviterPlats,sans_courses:appState.sansCourses}));
     const r=d.recette||d;appState.suggestion=r;
     $("platTitre").textContent=r.titre||"Une idée";
     $("platMetas").innerHTML=(r.temps?`<span>${esc(r.temps)}</span>`:"")+(r.difficulte?`<span>${esc(r.difficulte)}</span>`:"")+(r.parts?`<span>${esc(r.parts)} pers.</span>`:"")+(r.calories_estimees?`<span>${esc(r.calories_estimees)}</span>`:"");
     const dispo=r.ingredients_dispo_utilises||[];
-    $("platJustif").textContent=dispo.length?"Avec "+(dispo.slice(0,3).join(", "))+(dispo.length>3?" et le reste":"")+" qu'on a déjà. Max "+appState.duree_max+" min.":"Tout est à la maison.";
+    $("platJustif").textContent=appState.sansCourses
+      ?"✓ Uniquement avec ce qu'on a, rien à acheter. Max "+appState.duree_max+" min."
+      :dispo.length?"Avec "+(dispo.slice(0,3).join(", "))+(dispo.length>3?" et le reste":"")+" qu'on a déjà. Max "+appState.duree_max+" min.":"Tout est à la maison.";
   }catch(e){$("platTitre").textContent="La cuisine réfléchit de travers.";$("platJustif").textContent="On réessaie ?";}
 }
 function choisirPlat(){ if(appState.suggestion){ouvreFiche(appState.suggestion);} else {generer().then(()=>{if(appState.suggestion)ouvreFiche(appState.suggestion);});} }
@@ -532,7 +534,7 @@ function ouvreFiche(r){
   let manqHtml=manq.length?`<ul>${manq.map(x=>`<li class="manq-ligne" data-manq="${esc(x)}"><span>${esc(x)}</span><button class="btn-add-manq" title="C'est à la maison → l'ajouter aux réserves">＋</button></li>`).join("")}</ul>`:"<span style='color:var(--persil)'>Rien, tout est là.</span>";
   f.innerHTML=`
     <button class="fermer" id="btnFermerFiche">← Retour</button>
-    <h2>${esc(r.titre||"Recette")}</h2>
+    <h2>${esc(r.titre||"Recette")}${appState.sansCourses?' <span class="badge-sc" style="font-size:12px;vertical-align:middle;color:var(--persil);">🚫 sans courses</span>':""}</h2>
     <div class="intro">${r.style?esc(r.style):""}</div>
     <div class="metas">${r.temps?`<span>${esc(r.temps)}</span>`:""}${r.difficulte?`<span>${esc(r.difficulte)}</span>`:""}${r.parts?`<span>${esc(r.parts)} pers.</span>`:""}${r.calories_estimees?`<span>${esc(r.calories_estimees)}</span>`:""}</div>
     <div class="chiffre-parts" style="display:flex;align-items:center;gap:8px;margin:4px 0 2px;flex-wrap:wrap;">
@@ -659,9 +661,11 @@ function openSheet(which){
       <div class="bloc-contrainte"><div class="lab">Difficulté max</div><div class="chips" id="zD">${["facile","moyen","difficile"].map(x=>`<button class="chip ${appState.difficulte_max===x?"on":""}" data-d="${x}">${x}</button>`).join("")}</div></div>
       <div class="bloc-contrainte"><div class="lab">Durée max (minutes)</div><div class="duree-row"><input type="number" id="sDuree" min="5" max="180" value="${appState.duree_max}"><span class="dur-min">min</span></div></div>
       <div class="bloc-contrainte"><div class="lab">Parts (par défaut 2)</div><div class="duree-row"><input type="number" id="sParts" min="1" max="12" value="${appState.parts}"><span class="dur-min">personnes</span></div></div>
+      <div class="bloc-contrainte"><div class="lab">Courses</div><button class="chip ${appState.sansCourses?"on":""}" id="sSC" style="width:100%;">🚫 Sans courses — uniquement ce qu'on a</button></div>
       <button class="btn btn-tomate" style="width:100%;margin-top:10px;" id="btnValiderEnvie">Ok, comme ça</button>`;
     b.querySelectorAll("#zM button").forEach(bn=>bn.addEventListener("click",()=>{appState.mode=bn.dataset.m;b.querySelectorAll("#zM button").forEach(x=>x.classList.remove("on"));bn.classList.add("on");}));
     b.querySelectorAll("#zD button").forEach(bn=>bn.addEventListener("click",()=>{appState.difficulte_max=bn.dataset.d;b.querySelectorAll("#zD button").forEach(x=>x.classList.remove("on"));bn.classList.add("on");}));
+    $("sSC").addEventListener("click",()=>{appState.sansCourses=!appState.sansCourses;localStorage.setItem(LS_SC,appState.sansCourses?"1":"0");$("sSC").classList.toggle("on",appState.sansCourses);});
     $("btnValiderEnvie").addEventListener("click",()=>{
       const dm=parseInt($("sDuree").value);if(dm>=5&&dm<=180)appState.duree_max=dm;
       const pt=parseInt($("sParts").value);if(pt>=1&&pt<=12)appState.parts=pt;
