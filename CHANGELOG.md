@@ -1,5 +1,8 @@
 # CHANGELOG — FrigoMalin
 
+## V3.29 (2026-08-06) — Durées « 1 h 15 » enfin comptées juste ⏱️
+- 2026-08-06 12:15 — Le minuteur et la vérification « durée max » savent désormais lire les durées composées (« 1 h 15 min », « 1h30 », « 1h30min » → 75/90 min) au lieu de ne retenir que l'heure. Auparavant, une recette annoncée « 1 h 15 » lançait un minuteur d'1 h seulement et la durée max était contrôlée sur 60 min au lieu de 75. + déploiement Vercel.
+
 ## V3.28 (2026-08-06) — Installable sur le téléphone 📲
 - 2026-08-06 11:10 — PWA : manifest + icône + service worker (cache de l'app) → FrigoMalin s'installe sur l'écran d'accueil du téléphone comme une vraie app, démarre plus vite et fonctionne même sans réseau (l'API reste toujours fraîche). + déploiement Vercel.
 

@@ -233,18 +233,25 @@ def normalize_recette(r):
 
 
 def minutes_from(temps):
-    """Extrait le nombre de minutes d'une chaîne de temps. Retourne None si inconnu."""
-    t = str(temps or "").lower()
-    if "heure" in t or "h " in t or t.endswith("h"):
-        h = re.search(r"(\d+(?:[.,]\d+)?)\s*h", t)
-        if h:
-            return int(float(h.group(1).replace(",", ".")) * 60)
+    """Extrait le nombre de minutes d'une chaîne de temps. Retourne None si inconnu.
+
+    Gère « 1 h 15 min », « 1h30 », « 1h30min », « 1,5 h », « 2 heures », « 45 min »…
+    (le minuteur et la vérification « durée max » se calent dessus)."""
+    t = str(temps or "").lower().strip()
+    if not t:
+        return None
+    # « 1 h 15 min » / « 1h30 » / « 1h30min » → heures + minutes
+    hm = (re.search(r"(?:^|\D)(\d{1,2})\s*h\s*(\d{1,2})\s*min(?:utes)?\b", t)
+          or re.search(r"(?:^|\D)(\d{1,2})\s*h\s*(\d{1,2})(?![.,\d])", t))
+    if hm:
+        return int(hm.group(1)) * 60 + int(hm.group(2))
+    # « 2 h » / « 1,5 h » / « 1h » / « 2 heures »
+    h = re.search(r"(\d+(?:[.,]\d+)?)\s*h", t)
+    if h:
+        return int(float(h.group(1).replace(",", ".")) * 60)
     m = re.search(r"(\d+)\s*min", t)
     if m:
         return int(m.group(1))
-    d = re.search(r"(\d+)\s*[hdj]", t)
-    if d:
-        return int(d.group(1)) * 60
     return None
 
 

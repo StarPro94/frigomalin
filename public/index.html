@@ -66,6 +66,10 @@
   #aSauver li:last-child{border-bottom:none;}
   #aSauver .tag{font-family:"Barlow Condensed";font-size:10px;color:var(--moutarde);text-transform:uppercase;border:1px solid var(--moutarde);padding:1px 6px;border-radius:2px;margin-left:auto;white-space:nowrap;}
   #aSauver .tag.per-expire{color:var(--danger);border-color:var(--danger);}
+  .manq-ligne.exclu{opacity:.45;text-decoration:line-through;}
+  .excl-box{border:1px dashed var(--ligne);border-radius:6px;padding:8px 10px;margin:10px 0 4px;display:flex;flex-wrap:wrap;align-items:center;gap:6px;}
+  .excl-titre{font-family:"Barlow Condensed";text-transform:uppercase;letter-spacing:.05em;font-size:11px;color:var(--encre-douce);}
+  .excl-chip{font-size:11px;padding:4px 9px;}
   .ligne-res .tag{font-family:"Barlow Condensed";font-size:10px;text-transform:uppercase;padding:1px 6px;border-radius:2px;margin-left:auto;white-space:nowrap;}
   .tag.per-vite{color:var(--moutarde);border:1px solid var(--moutarde);}
   .tag.per-expire{color:var(--danger);border:1px solid var(--danger);}
@@ -91,7 +95,7 @@
   .filtre.on{background:var(--persil-clair);border-style:solid;color:var(--encre);}
   .ligne-res{border-bottom:1px dashed var(--ligne);padding:10px 2px;display:flex;align-items:center;gap:8px;}
   .ligne-res:last-child{border-bottom:none;}
-  .ligne-res .n{flex:1;font-size:15px;}
+  .ligne-res .n{flex:1;font-size:15px;display:flex;align-items:center;gap:8px;}
   .ligne-res .q{color:var(--encre-douce);font-style:italic;font-size:13px;margin-right:6px;}
   .ligne-res .menu-btn{background:none;border:1px solid var(--ligne);border-radius:2px;width:30px;height:30px;font-size:15px;color:var(--encre-douce);cursor:pointer;display:flex;align-items:center;justify-content:center;}
   .grand-btn{font-family:"Barlow Condensed";text-transform:uppercase;letter-spacing:.06em;font-weight:700;border:1px solid var(--encre);border-radius:2px;padding:12px;width:100%;font-size:15px;cursor:pointer;background:var(--papier-clair);color:var(--encre);margin-top:10px;}
@@ -137,6 +141,8 @@
   .etapes li.done{opacity:.45;}
   .etapes li.done::before{content:"✓";color:var(--persil);}
   .etapes li.done .etape-texte{text-decoration:line-through;}
+  .etapes li.done::after{content:"";position:absolute;left:2px;right:8px;top:50%;height:2px;background:var(--ligne);transform:translateY(-50%);pointer-events:none;}
+  .etapes li .etape-texte{position:relative;}
   .barre-action{position:sticky;bottom:0;display:flex;gap:8px;margin-top:18px;padding-top:12px;border-top:2px solid var(--encre);background:var(--papier);flex-wrap:wrap;}
   .barre-action .btn{flex:1;min-width:110px;}
   /* ---- chat recette ---- */
@@ -305,6 +311,8 @@
 <script>
 // ---------- État ----------
 const LS_C="office_carnet",LS_U="office_user",LS_T="office_theme",LS_F="office_favoris",LS_SC="office_sanscourses",LS_E="office_envie";
+// « Je n'ai pas ça » : les ingrédients qu'on veut éviter pour ce soir, mémorisés sur le téléphone.
+const LS_EXCL="office_exclusions";
 // Préférences de cuisine mémorisées PAR PROFIL : Patrick et Emeline retrouvent
 // leur envie habituelle (mode, durée max, difficulté, parts) à chaque visite.
 const ENVIE_DEFAUT={mode:"gourmand",duree_max:20,difficulte_max:"facile",parts:2};
@@ -312,7 +320,7 @@ function loadEnvie(u){try{const all=JSON.parse(localStorage.getItem(LS_E)||"{}")
 function saveEnvie(){let all={};try{all=JSON.parse(localStorage.getItem(LS_E)||"{}");}catch(e){}all[appState.user]={mode:appState.mode,duree_max:appState.duree_max,difficulte_max:appState.difficulte_max,parts:appState.parts};localStorage.setItem(LS_E,JSON.stringify(all));}
 const _envie0=loadEnvie(localStorage.getItem(LS_U)||"patrick");
 const appState={view:"today",user:localStorage.getItem(LS_U)||"patrick",theme:localStorage.getItem(LS_T)==="night"?"night":"day",inventory:[],zone:"frigo",filtre:"tous",
-  mode:_envie0.mode,duree_max:_envie0.duree_max,difficulte_max:_envie0.difficulte_max,parts:_envie0.parts,excl:[],eviterPlats:[],sansCourses:localStorage.getItem(LS_SC)==="1",
+  mode:_envie0.mode,duree_max:_envie0.duree_max,difficulte_max:_envie0.difficulte_max,parts:_envie0.parts,excl:exclInit(),eviterPlats:[],sansCourses:localStorage.getItem(LS_SC)==="1",
   suggestion:null,carnet:JSON.parse(localStorage.getItem(LS_C)||"[]"),favoris:JSON.parse(localStorage.getItem(LS_F)||"[]"),favOnly:false,timer:null,recogOn:null,chatMsgs:[],_recetteChat:null,carnetQ:"",
   bases:[
     "sel","poivre","huile d'olive","beurre","ail","oignon","échalote","vinaigre","moutarde","sauce soja","sucre","farine","bouillon de légumes","bouillon de volaille",
@@ -343,7 +351,11 @@ function navigate(v){
 }
 function setUser(u){
   if(u!==appState.user){saveEnvie();const e=loadEnvie(u);appState.mode=e.mode;appState.duree_max=e.duree_max;appState.difficulte_max=e.difficulte_max;appState.parts=e.parts;}
-  appState.user=u;saveUser();$("chipP").classList.toggle("cur",u==="patrick");$("chipE").classList.toggle("cur",u==="emeline");renderNous();renderToday();}
+  appState.user=u;saveUser();$("chipP").classList.toggle("cur",u==="patrick");$("chipE").classList.toggle("cur",u==="emeline");renderNous();renderToday();
+  // profils : chacun sa liste d'ingrédients « je n'ai pas ça » (stockée par profil)
+  const all=JSON.parse(localStorage.getItem(LS_EXCL)||"{}");
+  appState.excl=(all[appState.user]||[]).slice();
+}
 function toggleTheme(){appState.theme=appState.theme==="day"?"night":"day";applyTheme();localStorage.setItem(LS_T,appState.theme);}
 function applyTheme(){document.body.dataset.theme=appState.theme;$("themeBtn").textContent=appState.theme==="day"?"☾":"☀";}
 function syncUI(){const b=$("syncRailBox");b.textContent=navigator.onLine?"· à jour":"· hors-ligne";b.style.color=navigator.onLine?"":"var(--tomate)";}
@@ -403,8 +415,49 @@ async function generer(){
       ?"✓ Uniquement avec ce qu'on a, rien à acheter. Max "+appState.duree_max+" min."
       :dispo.length?"Avec "+(dispo.slice(0,3).join(", "))+(dispo.length>3?" et le reste":"")+" qu'on a déjà. Max "+appState.duree_max+" min.":"Tout est à la maison.";
   }catch(e){$("platTitre").textContent="La cuisine réfléchit de travers.";$("platJustif").textContent="On réessaie ?";}
+  // Mémoire des exclusions : « Une autre idée » cumule les plats évités ; quand la
+  // suggestion disparaît (échec ou régénération complète), la liste se réinitialise.
+  if(appState.eviterPlats.length){persistExcl();}
+  if(!appState.suggestion&&appState.eviterPlats.length){appState.eviterPlats=[];persistExcl();}
 }
 function choisirPlat(){ if(appState.suggestion){ouvreFiche(appState.suggestion);} else {generer().then(()=>{if(appState.suggestion)ouvreFiche(appState.suggestion);});} }
+// ---------- Exclusions : « je n'ai pas ça » mémorisé (réserves) ----------
+// Stockage par profil : chaque membre a sa propre liste d'ingrédients à éviter.
+function persistExcl(){
+  const all=JSON.parse(localStorage.getItem(LS_EXCL)||"{}");
+  if(!appState.excl.length){delete all[appState.user];}else{all[appState.user]=appState.excl.slice();}
+  localStorage.setItem(LS_EXCL,JSON.stringify(all));
+}
+function exclInit(){ // au démarrage : lit la liste du profil courant
+  const all=JSON.parse(localStorage.getItem(LS_EXCL)||"{}");
+  return (all[localStorage.getItem(LS_U)||"patrick"]||[]).slice();
+}
+function estExclu(nom){return appState.excl.some(x=>norm(x)===norm(nom));}
+function toggleExcl(nom){
+  const i=appState.excl.findIndex(x=>norm(x)===norm(nom));
+  if(i>-1)appState.excl.splice(i,1);else appState.excl.push(nom);
+  persistExcl();
+  const f=$("fiche");
+  if(f){
+    const li=f.querySelector(`[data-manq="${CSS.escape(nom)}"]`);
+    if(li){
+      li.classList.toggle("exclu",estExclu(nom));
+      const plus=li.querySelector(".btn-add-manq");
+      if(plus){plus.disabled=estExclu(nom);plus.title=estExclu(nom)?"Exclu pour ce soir":"C'est à la maison → l'ajouter aux réserves";}
+    }
+  }
+  const b=$("btnExclure");if(b){b.innerHTML=estExclu(nom)?"↩️ Le remettre":"🚫 Je n'ai pas ça";}
+  const f2=$("fiche");
+  let box=f2?f2.querySelector("#exclBox"):null;
+  if(!box&&appState.excl.length&&f2){
+    box=document.createElement("div");box.id="exclBox";box.className="excl-box";
+    f2.querySelector(".listes").after(box);
+  }
+  if(box){
+    box.innerHTML=appState.excl.length?`<span class="excl-titre">🚫 À éviter pour ce soir</span>${appState.excl.map(x=>`<button class="chip excl-chip" data-unexcl="${esc(x)}">${esc(x)} ✕</button>`).join("")}`:"";
+    box.querySelectorAll("[data-unexcl]").forEach(bn=>bn.addEventListener("click",()=>toggleExcl(bn.dataset.unexcl)));
+  }
+}
 
 // ---------- Réserves ----------
 function setOnglet(z){appState.zone=z;document.querySelectorAll(".classeur button").forEach(b=>b.classList.toggle("actif",b.dataset.z===z));renderReserves();}
@@ -573,6 +626,7 @@ function ouvreFiche(r){
       <div class="col"><h5 class="av">On a déjà</h5><ul>${(r.ingredients_dispo_utilises||[]).map(x=>`<li>${esc(x)}</li>`).join("")||"<li style='border:none;font-style:italic;color:var(--encre-douce);'>—</li>"}</ul></div>
       <div class="col"><h5 class="manq">Il manque</h5>${manqHtml}</div>
     </div>
+    ${!appState.sansCourses&&manq.length?`<button class="btn btn-ligne" id="btnExclure" style="width:100%;margin-bottom:2px;">🚫 Je n'ai pas ça</button>`:""}${appState.excl.length?`<div class="excl-box" id="exclBox"><span class="excl-titre">🚫 À éviter pour ce soir</span>${appState.excl.map(x=>`<button class="chip excl-chip" data-unexcl="${esc(x)}">${esc(x)} ✕</button>`).join("")}</div>`:""}
     <ol class="etapes" id="etapesList">${(r.etapes||[]).map(x=>`<li title="Cocher / décocher"><span class="etape-texte">${esc(x)}</span></li>`).join("")}</ol>
     ${(r.etapes&&r.etapes.length)?`<div class="etapes-prog" id="etapesProg"><span>Progression :</span><b id="etapesCompte">0/${r.etapes.length}</b><button class="btn-lien" id="etapesReset" style="margin-left:auto;">↺ réinitialiser</button></div>`:""}
     ${r.astuce?`<div style="margin-top:10px;font-style:italic;color:var(--encre-douce);">${esc(r.astuce)}</div>`:""}
@@ -598,6 +652,9 @@ function ouvreFiche(r){
   const bf=$("btnFav");if(bf){bf.dataset.t=(r.titre)||"";bf.addEventListener("click",()=>toggleFavori(r));majBtnFav();}
   const bp=$("btnPartager");if(bp)bp.addEventListener("click",()=>partagerRecette(r));
   const bc=$("btnCourses");if(bc)bc.addEventListener("click",()=>listeCourses(r));
+  // « Je n'ai pas ça » : exclut le 1er manquant (et l'enlève du mode « sans courses »)
+  const bExcl=$("btnExclure");if(bExcl)bExcl.addEventListener("click",()=>{const m=(r.ingredients_manquants||[])[0];if(m)toggleExcl(m);});
+  f.querySelectorAll("[data-unexcl]").forEach(bn=>bn.addEventListener("click",()=>toggleExcl(bn.dataset.unexcl)));
   // « C'est à la maison » : un simple + sur un manquant l'ajoute aux réserves (frigo)
   f.querySelectorAll(".btn-add-manq").forEach(btn=>{
     btn.addEventListener("click",async()=>{
@@ -606,6 +663,7 @@ function ouvreFiche(r){
       // garde le vrai nom (avec accents), coupe « (ou X) » et « ou Y (facultatif) »
       let base=raw.split("(")[0].split(" ou ")[0].trim();
       if(!base){alert("Impossible d'ajouter : \""+raw+"\".");return;}
+      if(li.classList.contains("exclu")){alert("« "+base+" » est exclu pour ce soir.");return;}
       const deja=appState.inventory.some(x=>norm(x.nom)===norm(base));
       if(deja){alert("« "+base+" » est déjà dans les réserves.");return;}
       const ok=await apiAjouter(base,"","frigo",null);
@@ -655,7 +713,7 @@ function garderAuCarnet(r){
   appState.carnet.push({titre:r.titre||"Recette",date:new Date().toLocaleDateString("fr-FR"),duree:r.temps||"",by:appState.user==="patrick"?"Patrick":"Emeline",recette:r});
   saveCarnet();closeFiche();navigate("carnet");renderCarnet();
 }
-function recetteMinutes(t){if(!t)return null;const s=String(t).toLowerCase();let m=/(\d+(?:[.,]\d+)?)\s*min/.exec(s);if(m)return Math.max(1,Math.round(parseFloat(m[1].replace(",","."))));const h=/(\d+(?:[.,]\d+)?)\s*h/.exec(s);if(h)return Math.max(1,Math.round(parseFloat(h[1].replace(",","."))*60));return null;}
+function recetteMinutes(t){if(!t)return null;const s=String(t).toLowerCase().trim();let hm=/(?:^|\D)(\d{1,2})\s*h\s*(\d{1,2})\s*min(?:utes)?\b/.exec(s)||/(?:^|\D)(\d{1,2})\s*h\s*(\d{1,2})(?![.,\d])/.exec(s);if(hm)return Math.max(1,parseInt(hm[1])*60+parseInt(hm[2]));const h=/(\d+(?:[.,]\d+)?)\s*h/.exec(s);if(h)return Math.max(1,Math.round(parseFloat(h[1].replace(",","."))*60));const m=/(\d+(?:[.,]\d+)?)\s*min/.exec(s);if(m)return Math.max(1,Math.round(parseFloat(m[1].replace(",","."))));return null;}
 function timerLabel(r){const m=recetteMinutes(r&&r.temps);return m?"Minuteur "+m+" min":"Minuteur 10 min";}
 function demarrerMinuteur(recette){
   const slot=$("timerSlot");let s=recetteMinutes(recette&&recette.temps)||600;
