@@ -1,5 +1,9 @@
 # CHANGELOG — FrigoMalin
 
+## V3.22 (2026-08-06) — Minuteur au rythme de la recette ⏲️
+- Le bouton **« Minuteur »** se cale automatiquement sur la durée de la recette : si le plat annonce « 30 minutes », le bouton affiche « Minuteur 30 min » et le décompte part de 30 min (10 min par défaut si la durée est inconnue). Avant de lancer, on peut ajuster de **+5 / −5 min** en un appui. Quand c'est fini, « Terminé ! » s'affiche.
+- 2026-08-06 06:10 — Minuteur réglable calé sur la durée de la recette (label + décompte auto, ajustement ±5 min) + déploiement Vercel.
+
 ## V3.21 (2026-08-06) — Mode « Sans courses » 🚫
 - Dans « Changer l'envie », nouveau toggle **« 🚫 Sans courses — uniquement ce qu'on a »** : le chef doit composer la recette **uniquement avec les ingrédients disponibles**, liste « Il manque » vide (seuls sel, poivre, huile et épices de base sont tolérés). S'il propose quand même un achat, le serveur le reprend et régénère. Badge « 🚫 sans courses » dans la fiche, rappel « rien à acheter » sur Ce soir. Le choix est mémorisé sur le téléphone.
 - 2026-08-06 05:57 — Mode « Sans courses » (contrainte stricte côté serveur + toggle mémorisé + vérification/régénération) + déploiement Vercel.

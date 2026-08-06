@@ -136,6 +136,8 @@
   .timer .grand{font-size:52px;line-height:1;font-weight:700;font-variant-numeric:tabular-nums;}
   .timer .lab{text-transform:uppercase;letter-spacing:.1em;font-size:12px;opacity:.8;margin-bottom:4px;}
   .timer button{font-family:"Barlow Condensed";text-transform:uppercase;border:1px solid var(--papier-clair);background:none;color:var(--papier-clair);padding:6px 12px;margin-top:8px;border-radius:2px;cursor:pointer;}
+  .timer .timer-adjs{display:inline-flex;gap:6px;margin-bottom:6px;}
+  .timer .timer-adjs button{margin-top:0;padding:2px 10px;opacity:.85;}
   /* ---- bottom nav ---- */
   .bottomnav{position:fixed;bottom:0;left:0;right:0;background:var(--persil);display:flex;z-index:30;padding-bottom:env(safe-area-inset-bottom);}
   .bottomnav button{flex:1;border:none;background:none;color:var(--persil-clair);padding:11px 2px 9px;cursor:pointer;position:relative;font-family:"Barlow Condensed";font-size:12px;text-transform:uppercase;letter-spacing:.06em;display:flex;flex-direction:column;align-items:center;gap:3px;}
@@ -553,7 +555,7 @@ function ouvreFiche(r){
     </div>
     <div id="timerSlot"></div>
     <div class="barre-action">
-      <button class="btn btn-ligne" id="btnTimer">Minuteur 10 min</button>
+      <button class="btn btn-ligne" id="btnTimer">${timerLabel(r)}</button>
       <button class="btn btn-ligne" id="btnFav">❤️ Mettre en favori</button>
       <button class="btn btn-ligne" id="btnPartager">↗ Partager</button>
       <button class="btn btn-ligne" id="btnCourses">🛒 Liste de courses</button>
@@ -564,7 +566,7 @@ function ouvreFiche(r){
   $("partsPlus").addEventListener("click",()=>changerParts(r,1));
   $("chatSend").addEventListener("click",envoyerChat);
   $("chatIn").addEventListener("keydown",e=>{if(e.key==="Enter")envoyerChat();});
-  $("btnTimer").addEventListener("click",demarrerMinuteur);
+  $("btnTimer").addEventListener("click",()=>demarrerMinuteur(r));
   $("btnGarder").addEventListener("click",()=>{garderAuCarnet(r);});
   const bf=$("btnFav");if(bf){bf.dataset.t=(r.titre)||"";bf.addEventListener("click",()=>toggleFavori(r));majBtnFav();}
   const bp=$("btnPartager");if(bp)bp.addEventListener("click",()=>partagerRecette(r));
@@ -617,12 +619,28 @@ function garderAuCarnet(r){
   appState.carnet.push({titre:r.titre||"Recette",date:new Date().toLocaleDateString("fr-FR"),duree:r.temps||"",by:appState.user==="patrick"?"Patrick":"Emeline",recette:r});
   saveCarnet();closeFiche();navigate("carnet");renderCarnet();
 }
-function demarrerMinuteur(){
-  const slot=$("timerSlot");let s=600;
-  slot.innerHTML=`<div class="timer"><div class="lab">Minuteur</div><div class="grand">10:00</div><button id="btnStopT">Arrêter</button></div>`;
-  if(appState.timer)clearInterval(appState.timer);
-  $("btnStopT").addEventListener("click",()=>{clearInterval(appState.timer);slot.innerHTML="";});
-  appState.timer=setInterval(()=>{s--;if(s<=0){clearInterval(appState.timer);slot.querySelector(".grand").textContent="Terminé !";return;}const m=String(Math.floor(s/60)).padStart(2,"0"),ss=String(s%60).padStart(2,"0");slot.querySelector(".grand").textContent=m+":"+ss;},1000);
+function recetteMinutes(t){if(!t)return null;const s=String(t).toLowerCase();let m=/(\d+(?:[.,]\d+)?)\s*min/.exec(s);if(m)return Math.max(1,Math.round(parseFloat(m[1].replace(",","."))));const h=/(\d+(?:[.,]\d+)?)\s*h/.exec(s);if(h)return Math.max(1,Math.round(parseFloat(h[1].replace(",","."))*60));return null;}
+function timerLabel(r){const m=recetteMinutes(r&&r.temps);return m?"Minuteur "+m+" min":"Minuteur 10 min";}
+function demarrerMinuteur(recette){
+  const slot=$("timerSlot");let s=recetteMinutes(recette&&recette.temps)||600;
+  const fmt=()=>{const m=String(Math.floor(Math.max(0,s)/60)).padStart(2,"0"),ss=String(Math.max(0,s)%60).padStart(2,"0");return m+":"+ss;};
+  function render(){
+    const running=appState.timer;
+    slot.innerHTML=`<div class="timer">
+      <div class="lab">Minuteur</div>
+      ${running?'':`<span class="timer-adjs"><button id="tMoins" title="−5 min">−5</button><button id="tPlus" title="+5 min">+5</button></span>`}
+      <div class="grand">${s>0?fmt():"Terminé !"}</div>
+      ${running?`<button id="btnStopT">Arrêter</button>`:`<button id="btnLancer">${s===0?"Recommencer":"Lancer"}</button>`}
+    </div>`;
+    const plus=$("tPlus"),moins=$("tMoins");
+    if(plus)plus.addEventListener("click",()=>{clearInterval(appState.timer);appState.timer=null;s+=300;render();});
+    if(moins)moins.addEventListener("click",()=>{clearInterval(appState.timer);appState.timer=null;s=Math.max(5,s-300);render();});
+    const stop=$("btnStopT");if(stop)stop.addEventListener("click",()=>{clearInterval(appState.timer);appState.timer=null;render();});
+    const lancer=$("btnLancer");if(lancer)lancer.addEventListener("click",()=>{s=Math.max(1,Math.round(s));appState.timer=setInterval(tick,1000);render();});
+  }
+  function tick(){s--;if(s<=0){clearInterval(appState.timer);appState.timer=null;render();return;}const g=slot.querySelector(".grand");if(g)g.textContent=fmt();}
+  if(appState.timer){clearInterval(appState.timer);appState.timer=null;}
+  render();
 }
 // ---------- Dictée vocale ----------
 function recog(){return !!(window.SpeechRecognition||window.webkitSpeechRecognition);}
