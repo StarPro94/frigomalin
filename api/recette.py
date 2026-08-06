@@ -166,6 +166,42 @@ def _call(prompt, temperature=0.8, deadline=None):
     raise last if last else Exception("Échec de l'appel DeepSeek")
 
 
+def _extraire_json(texte):
+    """Extrait le premier objet JSON {...} d'une réponse IA.
+
+    Parcourt caractère par caractère en ignorant les accolades à l'intérieur
+    des chaînes (l'IA peut écrire « 1/2 } de citron » ou une émoticône) et
+    s'arrête à l'accolade fermante correspondante. Beaucoup plus fiable que
+    découper entre le premier `{` et le dernier `}` : du texte après le JSON,
+    deux objets, ou une accolade dans une phrase ne cassent plus la recette.
+    """
+    debut = texte.find("{")
+    if debut == -1:
+        raise ValueError("Réponse IA malformée")
+    profondeur = 0
+    dans_chaine = False
+    echappe = False
+    for i in range(debut, len(texte)):
+        c = texte[i]
+        if dans_chaine:
+            if echappe:
+                echappe = False
+            elif c == "\\":
+                echappe = True
+            elif c == '"':
+                dans_chaine = False
+            continue
+        if c == '"':
+            dans_chaine = True
+        elif c == "{":
+            profondeur += 1
+        elif c == "}":
+            profondeur -= 1
+            if profondeur == 0:
+                return texte[debut:i + 1]
+    raise ValueError("Réponse IA malformée")
+
+
 def parse_recette(raw):
     if not isinstance(raw, str) or not raw.strip():
         raise ValueError("Réponse IA vide")
@@ -174,11 +210,13 @@ def parse_recette(raw):
     if raw2.startswith("```"):
         raw2 = re.sub(r"^```[a-zA-Z]*\s*", "", raw2)
         raw2 = re.sub(r"\s*```\s*$", "", raw2)
-    s = raw2.find("{")
-    e = raw2.rfind("}")
-    if s == -1 or e == -1 or e <= s:
-        raise ValueError("Réponse IA malformée")
-    return json.loads(raw2[s:e + 1])
+    # 1) essai direct : réponse propre → aucun découpage nécessaire
+    try:
+        return json.loads(raw2)
+    except Exception:
+        pass
+    # 2) extraction du premier objet JSON équilibré (accolades dans les chaînes ignorées)
+    return json.loads(_extraire_json(raw2))
 
 
 def _as_list(v, split_phrases=False):
