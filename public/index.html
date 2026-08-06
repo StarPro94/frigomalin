@@ -296,9 +296,15 @@
 
 <script>
 // ---------- État ----------
-const LS_C="office_carnet",LS_U="office_user",LS_T="office_theme",LS_F="office_favoris",LS_SC="office_sanscourses";
+const LS_C="office_carnet",LS_U="office_user",LS_T="office_theme",LS_F="office_favoris",LS_SC="office_sanscourses",LS_E="office_envie";
+// Préférences de cuisine mémorisées PAR PROFIL : Patrick et Emeline retrouvent
+// leur envie habituelle (mode, durée max, difficulté, parts) à chaque visite.
+const ENVIE_DEFAUT={mode:"gourmand",duree_max:20,difficulte_max:"facile",parts:2};
+function loadEnvie(u){try{const all=JSON.parse(localStorage.getItem(LS_E)||"{}");return Object.assign({},ENVIE_DEFAUT,all[u]||{});}catch(e){return Object.assign({},ENVIE_DEFAUT);}}
+function saveEnvie(){let all={};try{all=JSON.parse(localStorage.getItem(LS_E)||"{}");}catch(e){}all[appState.user]={mode:appState.mode,duree_max:appState.duree_max,difficulte_max:appState.difficulte_max,parts:appState.parts};localStorage.setItem(LS_E,JSON.stringify(all));}
+const _envie0=loadEnvie(localStorage.getItem(LS_U)||"patrick");
 const appState={view:"today",user:localStorage.getItem(LS_U)||"patrick",theme:localStorage.getItem(LS_T)==="night"?"night":"day",inventory:[],zone:"frigo",filtre:"tous",
-  mode:"gourmand",duree_max:20,difficulte_max:"facile",parts:2,excl:[],eviterPlats:[],sansCourses:localStorage.getItem(LS_SC)==="1",
+  mode:_envie0.mode,duree_max:_envie0.duree_max,difficulte_max:_envie0.difficulte_max,parts:_envie0.parts,excl:[],eviterPlats:[],sansCourses:localStorage.getItem(LS_SC)==="1",
   suggestion:null,carnet:JSON.parse(localStorage.getItem(LS_C)||"[]"),favoris:JSON.parse(localStorage.getItem(LS_F)||"[]"),favOnly:false,timer:null,recogOn:null,chatMsgs:[],_recetteChat:null,carnetQ:"",
   bases:[
     "sel","poivre","huile d'olive","beurre","ail","oignon","échalote","vinaigre","moutarde","sauce soja","sucre","farine","bouillon de légumes","bouillon de volaille",
@@ -327,7 +333,9 @@ function navigate(v){
   document.querySelectorAll(".bottomnav [data-nav],.rail [data-nav]").forEach(b=>b.classList.toggle("cur",b.dataset.nav===v));
   (v==="today")&&renderToday();(v==="reserves")&&renderReserves();(v==="carnet")&&renderCarnet();(v==="nous")&&renderNous();
 }
-function setUser(u){appState.user=u;saveUser();$("chipP").classList.toggle("cur",u==="patrick");$("chipE").classList.toggle("cur",u==="emeline");renderNous();renderToday();}
+function setUser(u){
+  if(u!==appState.user){saveEnvie();const e=loadEnvie(u);appState.mode=e.mode;appState.duree_max=e.duree_max;appState.difficulte_max=e.difficulte_max;appState.parts=e.parts;}
+  appState.user=u;saveUser();$("chipP").classList.toggle("cur",u==="patrick");$("chipE").classList.toggle("cur",u==="emeline");renderNous();renderToday();}
 function toggleTheme(){appState.theme=appState.theme==="day"?"night":"day";applyTheme();localStorage.setItem(LS_T,appState.theme);}
 function applyTheme(){document.body.dataset.theme=appState.theme;$("themeBtn").textContent=appState.theme==="day"?"☾":"☀";}
 function syncUI(){const b=$("syncRailBox");b.textContent=navigator.onLine?"· à jour":"· hors-ligne";b.style.color=navigator.onLine?"":"var(--tomate)";}
@@ -728,7 +736,7 @@ function openSheet(which){
     $("btnValiderEnvie").addEventListener("click",()=>{
       const dm=parseInt($("sDuree").value);if(dm>=5&&dm<=180)appState.duree_max=dm;
       const pt=parseInt($("sParts").value);if(pt>=1&&pt<=12)appState.parts=pt;
-      fermerSheet();generer();
+      saveEnvie();fermerSheet();generer();
     });
     $("sClose").addEventListener("click",fermerSheet);
   }else if(which==="ing"){
