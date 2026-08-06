@@ -1,5 +1,8 @@
 # CHANGELOG — FrigoMalin
 
+## V3.32 (2026-08-06) — Robustesse serveur & PWA en nuit 🛠️
+- 2026-08-06 12:37 — `api/recette.py` : la garde « impossible de générer une recette valide » est désormais atteignable (elle était placée après un `return`, donc jamais levée) → après 3 essais infructueux, le serveur répond une vraie erreur 500 explicite au lieu de renvoyer `None` ; barre d'outils de la fiche recette en mode nuit (fond sombre, pas de bloc clair) ; PWA : `theme-color` suit le thème (jour ☀ / nuit ☾) et le cache du service worker est rafraîchi (v2). + déploiement Vercel.
+
 ## V3.31 (2026-08-06) — « À finir » trié par urgence 🧊
 - 2026-08-06 14:15 — Le filtre « À finir » des réserves et la liste « À sauver d'abord » classent désormais par urgence réelle : ce qui est vide/fini passe devant ce qui est juste entamé (vide > fond/½ > peu > entamé, puis alphabétique). Fini de chercher le fond de crème au milieu de la liste. + déploiement Vercel.
 

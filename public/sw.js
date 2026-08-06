@@ -1,6 +1,6 @@
 /* FrigoMalin — service worker : cache de l'app pour un démarrage instantané et un usage hors-ligne.
    L'API (/api/recette) n'est volontairement PAS mise en cache : elle doit toujours être fraîche. */
-const CACHE = "frigomalin-v1";
+const CACHE = "frigomalin-v2";
 const ASSETS = ["/", "/index.html", "/manifest.webmanifest", "/icon.svg"];
 
 self.addEventListener("install", (e) => {

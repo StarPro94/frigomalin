@@ -74,5 +74,6 @@ frigo-malin/
 - [x] **Durées « 1 h 15 » comptées juste** — V3.29 : le minuteur et le contrôle « durée max » lisent les durées composées (« 1 h 15 min », « 1h30 » → 75/90 min) — le décompte et la vérification ne se calent plus seulement sur l'heure
 - [x] **Nettoyage serveur** — V3.30 : code mort retiré dans `api/recette.py` (levée d'erreur jamais atteignable après `return`), flux de génération plus lisible — aucun changement de comportement
 - [x] **« À finir » trié par urgence** — V3.31 : dans les réserves, le filtre « À finir » (et « À sauver d'abord » sur Ce soir) classe ce qui presse en premier — vide/fini > fond/½ > peu > entamé — au lieu de l'ordre alphabétique ; on voit tout de suite quoi finir dans l'assiette
+- [x] **Robustesse serveur & PWA en nuit** — V3.32 : garde « recette valide » réellement levée après 3 essais (erreur 500 explicite au lieu d'un `None` silencieux), barre d'outils de la fiche lisible en mode nuit, `theme-color` PWA qui suit le thème jour/nuit, cache du service worker rafraîchi (v2)
 
 _Le projet évolue automatiquement (cron d'amélioration continue)._
