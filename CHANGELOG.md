@@ -1,5 +1,9 @@
 # CHANGELOG — FrigoMalin
 
+## V3.17 (2026-08-06) — Vider les périmés 🗑️
+- Réserves : nouveau bouton **« 🗑️ Vider les périmés »** qui apparaît dès qu'un ingrédient est périmé (toutes zones confondues). Un appui affiche le décompte + la liste des produits à jeter, on confirme, et tout ce qui est périmé est enlevé d'un coup — plus besoin de supprimer ingrédient par ingrédient après une absence.
+- 2026-08-06 01:40 — Vider les périmés en un geste (avec confirmation) + déploiement Vercel.
+
 ## V3.16 (2026-08-06) — Budget temporel serveur ⏱️
 - Backend : l'appel DeepSeek est désormais borné dans le temps (timeout par tentative réduit à 40 s, budget global de 48 s pour l'ensemble génération + retry). Fini la fonction tuée silencieusement par la limite Vercel en plein milieu : si le temps manque, on répond une **HTTP 504** claire (« Réessaie ») au lieu d'un échec muet. On arrête tôt les nouvelles tentatives quand le budget est épuisé.
 - 2026-08-06 00:40 — Budget temporel global (timeout 40 s/tentative, 48 s au total, 504 propre) + déploiement Vercel.

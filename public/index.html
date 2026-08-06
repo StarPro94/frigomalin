@@ -87,6 +87,7 @@
   .ligne-res .q{color:var(--encre-douce);font-style:italic;font-size:13px;margin-right:6px;}
   .ligne-res .menu-btn{background:none;border:1px solid var(--ligne);border-radius:2px;width:30px;height:30px;font-size:15px;color:var(--encre-douce);cursor:pointer;display:flex;align-items:center;justify-content:center;}
   .grand-btn{font-family:"Barlow Condensed";text-transform:uppercase;letter-spacing:.06em;font-weight:700;border:1px solid var(--encre);border-radius:2px;padding:12px;width:100%;font-size:15px;cursor:pointer;background:var(--papier-clair);color:var(--encre);margin-top:10px;}
+  .grand-btn.btn-ligne-danger{border-color:var(--danger);color:var(--danger);}
   .vide{color:var(--encre-douce);font-style:italic;padding:12px 2px;}
   .car-ligne{border:1px solid var(--ligne);border-radius:6px;background:var(--papier-clair);padding:12px 14px;margin-bottom:10px;box-shadow:2px 3px 0 var(--ombre);}
   .car-ligne .date{font-family:"Barlow Condensed";font-size:10px;letter-spacing:.06em;color:var(--encre-douce);text-transform:uppercase;}
@@ -239,6 +240,7 @@
         <button data-z="congelateur">Congélo <span id="n-cg"></span></button>
       </div>
       <div id="listeReserves"></div>
+      <button class="grand-btn btn-ligne-danger" id="btnViderPerimes" style="display:none">🗑️ Vider les périmés</button>
       <button class="grand-btn" id="btnRanger">+ Ranger quelque chose</button>
     </section>
 
@@ -326,6 +328,15 @@ async function refresh(){
 }
 async function apiAjouter(nom,qte,zone,per){_mutex=true;try{const d=await api("/api/inventaire",j({action:"ajouter",nom,quantite:qte,zone,date_peremption:per||null}));appState.inventory=d.ingredients||[];return true;}catch(e){return false;}finally{_mutex=false;syncUI();renderReserves();renderToday();}}
 async function apiSupprimer(nom){_mutex=true;try{const d=await api("/api/inventaire",j({action:"supprimer",nom}));appState.inventory=d.ingredients||[];}catch(e){}finally{_mutex=false;syncUI();renderReserves();renderToday();}}
+async function viderPerimes(){
+  const perimes=appState.inventory.filter(i=>peremptionStat(i)==="expire");
+  if(!perimes.length)return;
+  const liste=perimes.slice(0,4).map(i=>i.nom).join(", ")+(perimes.length>4?"…":"");
+  if(!confirm("Jeter "+perimes.length+" périmé"+(perimes.length>1?"s":"")+" ? ("+liste+")"))return;
+  const b=$("btnViderPerimes");if(b){b.disabled=true;b.textContent="Je vide…";}
+  for(const i of perimes){await apiSupprimer(i.nom);}
+  if(b){b.disabled=false;}
+}
 function comptes(){const r={};appState.inventory.forEach(i=>r[i.zone]=(r[i.zone]||0)+1);return r;}
 // Péremption : renvoie "expire" (périmé), "vite" (dans <=2j) ou null (ok/pas de date)
 function peremptionStat(i){
@@ -371,6 +382,10 @@ function setFiltre(f){appState.filtre=f;document.querySelectorAll(".filtre").for
 function renderReserves(){
   const c=comptes();$("n-frigo").textContent=c.frigo||0;$("n-gm").textContent=c["garde-manger"]||0;$("n-cg").textContent=c.congelateur||0;
   const box=$("listeReserves");box.innerHTML="";
+  // Bouton « Vider les périmés » : visible dès qu'au moins un ingrédient est périmé (toutes zones confondues)
+  const nbExpire=appState.inventory.filter(i=>peremptionStat(i)==="expire").length;
+  const bVider=$("btnViderPerimes");
+  if(bVider){bVider.style.display=nbExpire?"block":"none";if(nbExpire)bVider.textContent="🗑️ Vider "+nbExpire+" périmé"+(nbExpire>1?"s":"");}
   const q=$("recherche").value.trim().toLowerCase();
   let items=appState.inventory.filter(i=>i.zone===appState.zone);
   if(q)items=items.filter(i=>i.nom.toLowerCase().includes(q));
@@ -683,6 +698,7 @@ document.querySelectorAll(".bottomnav [data-nav],.rail [data-nav]").forEach(b=>b
 document.querySelectorAll(".classeur button").forEach(b=>b.addEventListener("click",()=>setOnglet(b.dataset.z)));
 document.querySelectorAll(".filtre").forEach(b=>b.addEventListener("click",()=>setFiltre(b.dataset.f)));
 $("recherche").addEventListener("input",renderReserves);
+$("btnViderPerimes").addEventListener("click",viderPerimes);
 $("carnetRech").addEventListener("input",e=>{appState.carnetQ=e.target.value;renderCarnet();});
 $("btnFavOnly").addEventListener("click",()=>{appState.favOnly=!appState.favOnly;renderCarnet();});
 $("chipP").addEventListener("click",()=>setUser("patrick"));
