@@ -62,5 +62,6 @@ frigo-malin/
 - [x] **Vider les périmés** — V3.17 : bouton « 🗑️ Vider les périmés » dans les réserves dès qu'un ingrédient est périmé → confirmation avec le décompte + la liste, puis suppression de tout le périmé en un geste (plus de ménage ingrédient par ingrédient)
 - [x] **Recherche intelligente dans les réserves** — V3.18 : la recherche ignore accents et casse (« creme » → « Crème », « oeuf » → « Œufs »), matche aussi la quantité/état (« fond » → « un fond de crème »), et la déduplication des doublons tolère les accents
 - [x] **Liste de courses** — V3.19 : bouton « 🛒 Liste de courses » dans la fiche recette → copie tous les ingrédients manquants en une liste prête pour les courses (« ✓ Tout est là ! » si rien ne manque)
+- [x] **« Une autre idée » vraiment différente** — V3.20 : le bouton « Une autre idée » exclut côté serveur les plats déjà proposés (param `eviter_plats`), fini de retomber deux fois sur la même recette
 
 _Le projet évolue automatiquement (cron d'amélioration continue)._

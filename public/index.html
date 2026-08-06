@@ -286,7 +286,7 @@
 // ---------- État ----------
 const LS_C="office_carnet",LS_U="office_user",LS_T="office_theme",LS_F="office_favoris";
 const appState={view:"today",user:localStorage.getItem(LS_U)||"patrick",theme:localStorage.getItem(LS_T)==="night"?"night":"day",inventory:[],zone:"frigo",filtre:"tous",
-  mode:"gourmand",duree_max:20,difficulte_max:"facile",parts:2,excl:[],
+  mode:"gourmand",duree_max:20,difficulte_max:"facile",parts:2,excl:[],eviterPlats:[],
   suggestion:null,carnet:JSON.parse(localStorage.getItem(LS_C)||"[]"),favoris:JSON.parse(localStorage.getItem(LS_F)||"[]"),favOnly:false,timer:null,recogOn:null,chatMsgs:[],_recetteChat:null,carnetQ:"",
   bases:[
     "sel","poivre","huile d'olive","beurre","ail","oignon","échalote","vinaigre","moutarde","sauce soja","sucre","farine","bouillon de légumes","bouillon de volaille",
@@ -366,7 +366,7 @@ async function generer(){
   $("platTitre").textContent="Je regarde ce qu'il reste…";$("platMetas").innerHTML="";$("platJustif").textContent="";
   const ingredients=[...appState.inventory.map(i=>i.nom)];
   try{
-    const d=await api("/api/recette",j({mode:appState.mode,duree_max:appState.duree_max,difficulte_max:appState.difficulte_max,parts:appState.parts,ingredients,bases:appState.basesOn,exclusions:appState.excl}));
+    const d=await api("/api/recette",j({mode:appState.mode,duree_max:appState.duree_max,difficulte_max:appState.difficulte_max,parts:appState.parts,ingredients,bases:appState.basesOn,exclusions:appState.excl,eviter_plats:appState.eviterPlats}));
     const r=d.recette||d;appState.suggestion=r;
     $("platTitre").textContent=r.titre||"Une idée";
     $("platMetas").innerHTML=(r.temps?`<span>${esc(r.temps)}</span>`:"")+(r.difficulte?`<span>${esc(r.difficulte)}</span>`:"")+(r.parts?`<span>${esc(r.parts)} pers.</span>`:"")+(r.calories_estimees?`<span>${esc(r.calories_estimees)}</span>`:"");
@@ -726,7 +726,7 @@ $("themeBtn").addEventListener("click",toggleTheme);
 $("profilP").addEventListener("click",()=>setUser("patrick"));
 $("profilE").addEventListener("click",()=>setUser("emeline"));
 $("btnFaire").addEventListener("click",choisirPlat);
-$("btnAutre").addEventListener("click",generer);
+$("btnAutre").addEventListener("click",()=>{if(appState.suggestion&&appState.suggestion.titre){const t=appState.suggestion.titre;if(!appState.eviterPlats.includes(t))appState.eviterPlats.push(t);}generer();});
 $("btnEnvie").addEventListener("click",()=>openSheet("envie"));
 $("btnRanger").addEventListener("click",()=>openSheet("add"));
 $("btnExport").addEventListener("click",exporter);

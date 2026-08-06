@@ -104,7 +104,7 @@ def _valider_entree(body):
             "Mode inconnu : %r. Modes possibles : %s."
             % (mode, ", ".join(sorted(MODES)))
         )
-    for champ in ("ingredients", "bases", "exclusions", "messages"):
+    for champ in ("ingredients", "bases", "exclusions", "messages", "eviter_plats"):
         v = body.get(champ)
         if v is not None and not isinstance(v, list):
             raise BadRequest("Le champ '%s' doit être une liste." % champ)
@@ -207,18 +207,22 @@ def build_constraints(mode, duree_max, difficulte_max, parts):
     return "\n".join(lines) if lines else ""
 
 
-def build_generate_prompt(ingredients, bases, exclusions, mode, duree_max, difficulte_max, parts):
+def build_generate_prompt(ingredients, bases, exclusions, mode, duree_max, difficulte_max, parts, eviter_plats=None):
     dispo = ", ".join(ingredients) if ingredients else "AUCUN renseigné"
     tout = ", ".join(bases) if bases else ""
     excl = ""
     if exclusions:
         excl = (f"\nIMPORTANT : on n'a PAS à la maison (ne les cite ni comme utilisé ni comme manquant) : "
                 f"{', '.join(exclusions)}. Adapte complètement.")
+    evite = ""
+    if eviter_plats:
+        evite = (f"\nIMPORTANT : ne propose SURTOUT PAS ces plats (déjà proposés tout à l'heure, on n'en veut pas) : "
+                 f"{', '.join(eviter_plats)}. Trouve une idée vraiment différente.")
     bases_s = f"\nBases qu'on a presque toujours (à utiliser si besoin, sans les lister comme manquants) : {tout}." if tout else ""
     c = build_constraints(mode, duree_max, difficulte_max, parts)
     return f"""
 Contexte : je cuisine pour ma famille avec ce que j'ai.
-Ingrédients disponibles : {dispo}.{bases_s}{excl}
+Ingrédients disponibles : {dispo}.{bases_s}{excl}{evite}
 
 Contraintes (à respecter IMPÉRATIVEMENT) : {c}
 
@@ -231,6 +235,7 @@ def generate(body):
     ingredients = [str(i).strip() for i in body.get("ingredients", []) if str(i).strip()]
     bases = [str(i).strip() for i in body.get("bases", []) if str(i).strip()]
     exclusions = [str(i).strip() for i in body.get("exclusions", []) if str(i).strip()]
+    eviter_plats = [str(i).strip() for i in body.get("eviter_plats", []) if str(i).strip()]
     mode = str(body.get("mode", "gourmand"))
     duree_max = body.get("duree_max")
     duree_max = int(duree_max) if isinstance(duree_max, (int, float)) and duree_max > 0 else None
@@ -240,14 +245,14 @@ def generate(body):
 
     # on essaie jusqu'à 3 fois, en durcissant la consigne durée si dépassé
     deadline = time.time() + GLOBAL_TIMEOUT
-    prompt = build_generate_prompt(ingredients, bases, exclusions, mode, duree_max, difficulte_max, parts)
+    prompt = build_generate_prompt(ingredients, bases, exclusions, mode, duree_max, difficulte_max, parts, eviter_plats)
     for attempt in range(3):
         raw = _call(prompt, deadline=deadline)
         r = parse_recette(raw)
         if duree_max:
             mn = minutes_from(r.get("temps"))
             if mn is not None and mn > duree_max:
-                prompt = build_generate_prompt(ingredients, bases, exclusions, mode, duree_max, difficulte_max, parts) + (
+                prompt = build_generate_prompt(ingredients, bases, exclusions, mode, duree_max, difficulte_max, parts, eviter_plats) + (
                     f"\n\nATTENTION : la recette précedente durait {r.get('temps')}, ce qui dépasse la limite de "
                     f"{duree_max} min. Réponds avec une recette VRAIMENT plus courte, simple et rapide. "
                     f"Le 'temps' doit être <= {duree_max} minutes (par exemple {max(5, duree_max // 3)}-{duree_max} minutes)."

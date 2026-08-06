@@ -1,5 +1,9 @@
 # CHANGELOG — FrigoMalin
 
+## V3.20 (2026-08-06) — « Une autre idée » vraiment différente 🔄
+- Bouton **« Une autre idée »** sur « Ce soir » : le plat déjà proposé (et les suivants) est désormais **exclu côté serveur** — plus de risque de retomber deux fois sur la même recette. Le backend accepte une liste `eviter_plats` et interdit explicitement à l'IA de les reproposer.
+- 2026-08-06 04:40 — « Une autre idée » exclut les plats déjà proposés (param `eviter_plats`) + déploiement Vercel.
+
 ## V3.19 (2026-08-06) — Liste de courses 🛒
 - Dans la fiche recette, nouveau bouton **« 🛒 Liste de courses »** : un appui copie d'un coup tous les ingrédients manquants en liste prête pour les courses (avec le titre du plat en entête). Si tout est à la maison, le bouton affiche « ✓ Tout est là ! ». Pratique pour faire les courses sans recopier.
 - 2026-08-06 03:50 — Liste de courses (copie des manquants depuis la fiche) + déploiement Vercel.
