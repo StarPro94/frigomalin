@@ -303,7 +303,7 @@ const $=id=>document.getElementById(id);
 async function api(url,opts){const r=await fetch(url,opts);const t=await r.text();let d;try{d=JSON.parse(t);}catch(e){d={};}if(!r.ok)throw new Error(d.error||"Erreur "+r.status);return d;}
 const j=d=>({method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(d)});
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
-function norm(s){return String(s).toLowerCase().replace("œ","oe").replace("æ","ae").replace(/[^a-z0-9 ]/g,"").trim();}
+function norm(s){return String(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/œ/g,"oe").replace(/æ/g,"ae").replace(/[^a-z0-9 ]/g,"").trim();}
 function saveUser(){localStorage.setItem(LS_U,appState.user);}
 function saveCarnet(){localStorage.setItem(LS_C,JSON.stringify(appState.carnet));}
 
@@ -385,10 +385,10 @@ function renderReserves(){
   // Bouton « Vider les périmés » : visible dès qu'au moins un ingrédient est périmé (toutes zones confondues)
   const nbExpire=appState.inventory.filter(i=>peremptionStat(i)==="expire").length;
   const bVider=$("btnViderPerimes");
-  if(bVider){bVider.style.display=nbExpire?"block":"none";if(nbExpire)bVider.textContent="🗑️ Vider "+nbExpire+" périmé"+(nbExpire>1?"s":"");}
-  const q=$("recherche").value.trim().toLowerCase();
+  if(bVider){bVider.style.display=nbExpire?"block":"none";if(nbExpire)bVider.textContent="🗑️ Vider "+nbExpire+" périmé"+(nbExpire>1? "s":"");}
+  const q=norm($("recherche").value);
   let items=appState.inventory.filter(i=>i.zone===appState.zone);
-  if(q)items=items.filter(i=>i.nom.toLowerCase().includes(q));
+  if(q)items=items.filter(i=>norm(i.nom).includes(q)||norm(i.quantite).includes(q));
   const low=/fond|vide|peu|entam|½/i;
   if(appState.filtre==="low")items=items.filter(i=>low.test(i.quantite||""));
   if(appState.filtre==="per")items=items.filter(i=>peremptionStat(i));

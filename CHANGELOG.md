@@ -1,5 +1,9 @@
 # CHANGELOG — FrigoMalin
 
+## V3.18 (2026-08-06) — Recherche intelligente dans les réserves 🔍
+- Réserves : la recherche ignore désormais les **accents et la casse** (« creme » trouve « Crème fraîche », « oeuf » trouve « Œufs », « EPINARDS » trouve « Épinards ») et cherche aussi dans la **quantité/état** (« fond » trouve « un fond de crème »). Au passage, la déduplication des doublons (ajout d'un ingrédient déjà présent) tolère elle aussi les accents.
+- 2026-08-06 02:05 — Recherche insensible aux accents/ligatures + recherche dans la quantité + dédup corrigée, déploiement Vercel.
+
 ## V3.17 (2026-08-06) — Vider les périmés 🗑️
 - Réserves : nouveau bouton **« 🗑️ Vider les périmés »** qui apparaît dès qu'un ingrédient est périmé (toutes zones confondues). Un appui affiche le décompte + la liste des produits à jeter, on confirme, et tout ce qui est périmé est enlevé d'un coup — plus besoin de supprimer ingrédient par ingrédient après une absence.
 - 2026-08-06 01:40 — Vider les périmés en un geste (avec confirmation) + déploiement Vercel.

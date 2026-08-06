@@ -60,5 +60,6 @@ frigo-malin/
 - [x] **Partager une recette (↗)** — V3.15 : bouton dans la fiche → partage natif mobile ou copie de la recette (titre, ingrédients, étapes, astuce) dans le presse-papiers, pour envoyer le menu du soir
 - [x] **Budget temporel serveur** — V3.16 : appel DeepSeek borné dans le temps (40 s/tentative, 48 s au total), arrêt anticipé des retry, et **HTTP 504** claire au lieu d'une fonction tuée par la limite Vercel en plein milieu d'une génération
 - [x] **Vider les périmés** — V3.17 : bouton « 🗑️ Vider les périmés » dans les réserves dès qu'un ingrédient est périmé → confirmation avec le décompte + la liste, puis suppression de tout le périmé en un geste (plus de ménage ingrédient par ingrédient)
+- [x] **Recherche intelligente dans les réserves** — V3.18 : la recherche ignore accents et casse (« creme » → « Crème », « oeuf » → « Œufs »), matche aussi la quantité/état (« fond » → « un fond de crème »), et la déduplication des doublons tolère les accents
 
 _Le projet évolue automatiquement (cron d'amélioration continue)._
