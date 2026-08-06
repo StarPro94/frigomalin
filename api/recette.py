@@ -367,7 +367,7 @@ def generate(body):
         if duree_max:
             mn = minutes_from(r.get("temps"))
             if mn is not None and mn > duree_max:
-                prompt = build_generate_prompt(ingredients, bases, exclusions, mode, duree_max, difficulte_max, parts, eviter_plats, sans_courses) + (
+                prompt = build_generate_prompt(ingredients, bases, exclusions, mode, duree_max, difficulte_max, parts, eviter_plats, sans_courses, prioriser) + (
                     f"\n\nATTENTION : la recette précedente durait {r.get('temps')}, ce qui dépasse la limite de "
                     f"{duree_max} min. Réponds avec une recette VRAIMENT plus courte, simple et rapide. "
                     f"Le 'temps' doit être <= {duree_max} minutes (par exemple {max(5, duree_max // 3)}-{duree_max} minutes)."
@@ -376,7 +376,7 @@ def generate(body):
         if sans_courses:
             manquants = [m for m in (r.get("ingredients_manquants") or []) if not est_assaisonnement(m)]
             if manquants:
-                prompt = build_generate_prompt(ingredients, bases, exclusions, mode, duree_max, difficulte_max, parts, eviter_plats, sans_courses) + (
+                prompt = build_generate_prompt(ingredients, bases, exclusions, mode, duree_max, difficulte_max, parts, eviter_plats, sans_courses, prioriser) + (
                     "\n\nATTENTION : en mode SANS COURSES tu as proposé d'acheter : "
                     + ", ".join(manquants[:5])
                     + ". C'est interdit. Refais une recette avec UNIQUEMENT les ingrédients disponibles, "

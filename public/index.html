@@ -12,6 +12,7 @@
 <link rel="apple-touch-icon" href="/icon.svg">
 <meta name="theme-color" content="#355744" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#211F1B" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" id="metaT" content="#355744">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -379,8 +380,8 @@ function setUser(u){
   const all=JSON.parse(localStorage.getItem(LS_EXCL)||"{}");
   appState.excl=(all[appState.user]||[]).slice();
 }
-function toggleTheme(){appState.theme=appState.theme==="day"?"night":"day";applyTheme();localStorage.setItem(LS_T,appState.theme);}
-function applyTheme(){document.body.dataset.theme=appState.theme;$("themeBtn").textContent=appState.theme==="day"?"☾":"☀";}
+function toggleTheme(){appState.theme=appState.theme==="day"?"night":"day";applyTheme();localStorage.setItem(LS_T,appState.theme);const m=$("metaT");if(m)m.setAttribute("content",appState.theme==="night"?"#211F1B":"#355744");}
+function applyTheme(){document.body.dataset.theme=appState.theme;$("themeBtn").textContent=appState.theme==="day"?"☾":"☀";const m=$("metaT");if(m)m.setAttribute("content",appState.theme==="night"?"#211F1B":"#355744");}
 function syncUI(){const b=$("syncRailBox");b.textContent=navigator.onLine?"· à jour":"· hors-ligne";b.style.color=navigator.onLine?"":"var(--tomate)";}
 
 // ---------- Inventaire ----------
