@@ -135,3 +135,5 @@ Zone congélateur, « je n'ai pas ça », relooking, stockage Redis atomique, 36
 
 ## V1 (2026-08-04)
 Inventaire, recettes DeepSeek, export/import.
+
+- 2026-08-06 22:20 — **Robustesse du chat recette (V3.37)** : `api/chat.py` aligné sur `api/recette.py` — entrée validée (JSON malformé, `messages`/`ingredients`/`recette` mal typés, mode inconnu → **HTTP 400** clair au lieu dun

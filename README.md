@@ -38,6 +38,7 @@ frigo-malin/
 | `/api/recette` | POST | `{mode, duree, ingredients}` → recette IA |
 
 ## Roadmap (améliorations continues)
+- [x] **Robustesse du chat recette** — V3.37 : `api/chat.py` aligné sur `api/recette.py` (entrée validée → 400 clair, parsing JSON équilibré, retry ×3, budget temporel → 504, réponse réassainie)
 - [x] Export / import inventaire
 - [x] **Stockage partagé Redis** (même frigo sur tous les appareils, atomique, aucune perte) — V2
 - [x] **Mode « Surprise »** (je n'ai envie de rien → le chef choisit tout) — V1.2
