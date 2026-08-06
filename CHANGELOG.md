@@ -1,5 +1,8 @@
 # CHANGELOG — FrigoMalin
 
+## V3.31 (2026-08-06) — « À finir » trié par urgence 🧊
+- 2026-08-06 14:15 — Le filtre « À finir » des réserves et la liste « À sauver d'abord » classent désormais par urgence réelle : ce qui est vide/fini passe devant ce qui est juste entamé (vide > fond/½ > peu > entamé, puis alphabétique). Fini de chercher le fond de crème au milieu de la liste. + déploiement Vercel.
+
 ## V3.30 (2026-08-06) — Nettoyage serveur 🧹
 - 2026-08-06 13:05 — Correction du code mort dans `api/recette.py` : `raise ValueError` placé après un `return` (jamais atteignable) → supprimé la confusion, le flux reste explicite et compilable. + déploiement Vercel (vérifié : `/` 200, `/api/recette` répond une recette).
 
