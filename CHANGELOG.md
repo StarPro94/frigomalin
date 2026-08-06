@@ -1,5 +1,8 @@
 # CHANGELOG — FrigoMalin
 
+## V3.28 (2026-08-06) — Installable sur le téléphone 📲
+- 2026-08-06 11:10 — PWA : manifest + icône + service worker (cache de l'app) → FrigoMalin s'installe sur l'écran d'accueil du téléphone comme une vraie app, démarre plus vite et fonctionne même sans réseau (l'API reste toujours fraîche). + déploiement Vercel.
+
 ## V3.27 (2026-08-06) — Envie de cuisine mémorisée par profil 🧂
 - 2026-08-06 10:52 — Chaque profil (Patrick / Emeline) garde en mémoire sa propre envie de cuisine : mode, durée max, difficulté max et parts par défaut se rétablissent automatiquement au changement de profil et à la prochaine visite. + déploiement Vercel.
 

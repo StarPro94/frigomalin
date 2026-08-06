@@ -1,0 +1,19 @@
+{
+  "name": "FrigoMalin — l'office de Patrick & Emeline",
+  "short_name": "FrigoMalin",
+  "description": "Quoi manger avec ce que j'ai dans le frigo ?",
+  "lang": "fr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F3EBDD",
+  "theme_color": "#355744",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

@@ -7,6 +7,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Literata:ital,wght@0,500;0,600;1,500;1,600&display=swap" rel="stylesheet">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon.svg">
+<meta name="theme-color" content="#355744">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FrigoMalin">
 <style>
   :root{
     --papier:#F3EBDD; --papier-clair:#FBF7EF;
@@ -809,6 +817,8 @@ applyTheme();
 renderNous();renderReserves();renderToday();renderCarnet();syncUI();
 refresh();
 setInterval(()=>{if(!_mutex)refresh();},12000);
+// ---------- Service worker (PWA : installable + démarrage hors-ligne) ----------
+if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("/sw.js").catch(()=>{});});}
 </script>
 </body>
 </html>
