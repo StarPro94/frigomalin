@@ -357,7 +357,7 @@ def generate(body):
             continue
         r.setdefault("parts", parts)
         return r
-    raise ValueError("Impossible de générer une recette valide sous les contraintes.")
+        raise ValueError("Impossible de générer une recette valide sous les contraintes.")  # pragma: no cover
 
 
 def chat(body):

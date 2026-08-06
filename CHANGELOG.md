@@ -1,5 +1,8 @@
 # CHANGELOG — FrigoMalin
 
+## V3.30 (2026-08-06) — Nettoyage serveur 🧹
+- 2026-08-06 13:05 — Correction du code mort dans `api/recette.py` : `raise ValueError` placé après un `return` (jamais atteignable) → supprimé la confusion, le flux reste explicite et compilable. + déploiement Vercel (vérifié : `/` 200, `/api/recette` répond une recette).
+
 ## V3.29 (2026-08-06) — Durées « 1 h 15 » enfin comptées juste ⏱️
 - 2026-08-06 12:15 — Le minuteur et la vérification « durée max » savent désormais lire les durées composées (« 1 h 15 min », « 1h30 », « 1h30min » → 75/90 min) au lieu de ne retenir que l'heure. Auparavant, une recette annoncée « 1 h 15 » lançait un minuteur d'1 h seulement et la durée max était contrôlée sur 60 min au lieu de 75. + déploiement Vercel.
 

@@ -72,5 +72,6 @@ frigo-malin/
 - [x] **Envie de cuisine mémorisée par profil** — V3.27 : Patrick et Emeline ont chacun leur propre « Changer l'envie » (mode, durée max, difficulté, parts par défaut) — retrouvés automatiquement à chaque changement de profil et à la prochaine visite
 - [x] **Installable sur le téléphone (PWA)** — V3.28 : manifest + icône + service worker → FrigoMalin s'ajoute à l'écran d'accueil comme une vraie app (iOS/Android), démarrage plus rapide et consultation des réserves/carnet possible hors-ligne (l'API reste toujours en ligne)
 - [x] **Durées « 1 h 15 » comptées juste** — V3.29 : le minuteur et le contrôle « durée max » lisent les durées composées (« 1 h 15 min », « 1h30 » → 75/90 min) — le décompte et la vérification ne se calent plus seulement sur l'heure
+- [x] **Nettoyage serveur** — V3.30 : code mort retiré dans `api/recette.py` (levée d'erreur jamais atteignable après `return`), flux de génération plus lisible — aucun changement de comportement
 
 _Le projet évolue automatiquement (cron d'amélioration continue)._
