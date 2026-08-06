@@ -178,6 +178,57 @@ def parse_recette(raw):
     return json.loads(raw2[s:e + 1])
 
 
+def _as_list(v, split_phrases=False):
+    """Force un champ en liste de chaînes : tolère liste, chaîne unique,
+    tuple… afin qu'un format légèrement déviant de l'IA ne casse pas la carte."""
+    if v is None or v == "":
+        return []
+    if isinstance(v, str):
+        # l'IA a pu renvoyer un texte au lieu d'une liste → on découpe intelligemment
+        # (points de fin de phrase pour les étapes, ; / virgules pour les ingrédients)
+        if split_phrases:
+            items = [x.strip() for x in re.split(r"[;.]+ |[;.]+$|\n", v) if x.strip()]
+        else:
+            items = [x.strip() for x in re.split(r"[;\n]+|,(?=\s)", v) if x.strip()]
+        if not items:
+            items = [v.strip()]
+        return [x for x in items if x and not x.isspace()]
+    if isinstance(v, (list, tuple)):
+        out = []
+        for x in v:
+            if isinstance(x, str):
+                out.append(x.strip())
+            elif x is not None:
+                out.append(str(x).strip())
+        return [x for x in out if x]
+    return [str(v).strip()]
+
+
+def normalize_recette(r):
+    """Réassainit la recette renvoyée par l'IA pour que la page ne casse jamais :
+    les listes sont toujours des listes, les chaînes des chaînes, parts un entier."""
+    if not isinstance(r, dict):
+        raise ValueError("Réponse IA non objet")
+    r["ingredients_dispo_utilises"] = _as_list(r.get("ingredients_dispo_utilises"))
+    r["ingredients_manquants"] = _as_list(r.get("ingredients_manquants"))
+    r["etapes"] = _as_list(r.get("etapes"), split_phrases=True)
+    for champ in ("titre", "style", "temps", "difficulte", "calories_estimees", "astuce"):
+        v = r.get(champ)
+        r[champ] = (str(v).strip() if v is not None else "")
+        if champ == "difficulte" and r["difficulte"]:
+            # harmonise la casse/typo des niveaux de difficulté connus
+            for kk, vv in DIFFS.items():
+                if vv.lower() == r["difficulte"].lower():
+                    r["difficulte"] = vv
+                    break
+    try:
+        r["parts"] = int(r.get("parts", 2))
+    except (TypeError, ValueError):
+        r["parts"] = 2
+    r["parts"] = max(1, min(r["parts"], 24))
+    return r
+
+
 def minutes_from(temps):
     """Extrait le nombre de minutes d'une chaîne de temps. Retourne None si inconnu."""
     t = str(temps or "").lower()
@@ -271,7 +322,7 @@ def generate(body):
     prompt = build_generate_prompt(ingredients, bases, exclusions, mode, duree_max, difficulte_max, parts, eviter_plats, sans_courses)
     for attempt in range(3):
         raw = _call(prompt, deadline=deadline)
-        r = parse_recette(raw)
+        r = normalize_recette(parse_recette(raw))
         if duree_max:
             mn = minutes_from(r.get("temps"))
             if mn is not None and mn > duree_max:
@@ -330,10 +381,9 @@ Réponds en JSON avec EXACTEMENT cette structure (pas de markdown) :
 {{{JSON_STRUCT}}}
 """
     raw = _call(prompt, temperature=0.7, deadline=time.time() + GLOBAL_TIMEOUT)
-    r = parse_recette(raw)
+    r = normalize_recette(parse_recette(raw))
     if not r.get("titre"):
         raise ValueError("Réponse malformée")
-    r.setdefault("parts", parts)
     return r
 
 

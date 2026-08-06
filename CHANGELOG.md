@@ -1,5 +1,9 @@
 # CHANGELOG — FrigoMalin
 
+## V3.25 (2026-08-06) — Recette robuste face aux réponses IA 🛡️
+- 2026-08-06 10:23 — Normalisation serveur des réponses IA (listes/parts/difficulté bornées) + déploiement Vercel.
+- Backend : chaque recette renvoyée par l'IA est **réassainie** avant d'atteindre l'écran — les listes (`étapes`, `ingrédients dispo`, `manquants`) sont toujours des listes (l'IA a pu les renvoyer en texte ou en virgules → elles sont découpées), le nombre de `parts` est forcé en entier borné (1-24) et les niveaux de difficulté harmonisés (« moyenne » → « Moyenne »). Fini la fiche recette qui peut casser si le modèle dévie du format attendu.
+
 ## V3.24 (2026-08-06) — Minuteur qui sonne 🔔
 - À la fin du décompte, le minuteur **sonne et vibre** : 3 bips (WebAudio, aucun fichier à charger) + vibration sur mobile, et le bloc passe en pulsation rouge « Terminé ! » — impossible de rater la fin de cuisson, même téléphone en poche.
 - 2026-08-06 09:35 — Alarme sonore + vibration + pulsation visuelle en fin de minuteur, déploiement Vercel.
