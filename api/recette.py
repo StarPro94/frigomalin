@@ -333,6 +333,47 @@ def est_assaisonnement(m):
     return any(k in mm for k in BASES_TOLEREES)
 
 
+# Mots-clés « carné » pour la VÉRIFICATION du mode végétarien : comme pour
+# « ⭐ à sauver », la durée max ou le mode sans courses, la contrainte veggie
+# est vérifiée — si l'IA glisse une viande ou un poisson (utilisé ou manquant),
+# on le reprend d'un ton ferme et on régénère, au lieu de laisser passer.
+CARNES = (
+    "viande", "volaille", "poulet", "dinde", "canard", "oie", "pintade", "caille",
+    "agneau", "veau", "boeuf", "bœuf", "porc", "lapin", "sanglier", "gibier",
+    "jambon", "lardon", "lardons", "bacon", "pancetta", "saucisse", "saucisson",
+    "chorizo", "merguez", "andouille", "boudin", "tripes", "rognon", "foie",
+    "steak", "escalope", "cotelette", "côtelette",
+    "poisson", "thon", "saumon", "cabillaud", "colin", "merlu", "lieu", "sole",
+    "truite", "maquereau", "sardine", "anchois", "hareng", "carpe", "brochet",
+    "anguille", "raie", "espadon", "daurade", "bar", "eperlan", "éperlan",
+    "crevette", "crevettes", "gambas", "langoustine", "homard", "crabe",
+    "moule", "moules", "calamar", "encornet", "poulpe", "seiche", "huitre",
+    "huître", "palourde", "bigorneau", "bulot", "saint-jacques",
+    "fruits de mer", "fruit de mer", "tarama", "surimi", "caviar",
+)
+
+
+def _norm_carne(s):
+    """Normalise un nom d'ingrédient pour la détection viande/poisson :
+    minuscules, ligatures et accents retirés (« Bœuf » → « boeuf »)."""
+    t = str(s or "").lower()
+    t = t.replace("œ", "oe").replace("æ", "ae")
+    return " ".join("".join(c for c in t if c.isalnum() or c.isspace()).split())
+
+
+def est_carne(item):
+    """True si l'ingrédient est manifestement de la viande ou du poisson
+    (mots-clés en frontière de mot). Tolérances : le « bouillon de volaille »
+    du placard (assaisonnement de base qu'on a presque toujours) et les
+    alternatives végétales (« steak de soja », « saucisse végétale », tofu…)."""
+    t = _norm_carne(item)
+    if "bouillon" in t:
+        return False
+    if "vegetal" in t or "tofu" in t or "soja" in t:
+        return False
+    return any(re.search(r"\b" + re.escape(kw) + r"\b", t) for kw in CARNES)
+
+
 def build_generate_prompt(ingredients, bases, exclusions, mode, duree_max, difficulte_max, parts, eviter_plats=None, sans_courses=False, prioriser=None):
     dispo = ", ".join(ingredients) if ingredients else "AUCUN renseigné"
     tout = ", ".join(bases) if bases else ""
@@ -409,6 +450,21 @@ def generate(body):
                     f"\n\nATTENTION : la recette précedente durait {r.get('temps')}, ce qui dépasse la limite de "
                     f"{duree_max} min. Réponds avec une recette VRAIMENT plus courte, simple et rapide. "
                     f"Le 'temps' doit être <= {duree_max} minutes (par exemple {max(5, duree_max // 3)}-{duree_max} minutes)."
+                )
+                continue
+        # Vérification du mode végétarien : si l'IA glisse une viande ou un
+        # poisson (utilisé ou manquant), on le reprend d'un ton ferme et on
+        # régénère — la contrainte veggie devient aussi stricte que les autres.
+        if mode == "veggie":
+            carnes = [x for x in (r.get("ingredients_dispo_utilises") or []) if est_carne(x)] + \
+                     [x for x in (r.get("ingredients_manquants") or []) if est_carne(x)]
+            if carnes:
+                prompt = build_generate_prompt(ingredients, bases, exclusions, mode, duree_max, difficulte_max, parts, eviter_plats, sans_courses, prioriser) + (
+                    "\n\nATTENTION : en mode VÉGÉTARIEN tu as proposé : "
+                    + ", ".join(carnes[:5])
+                    + ". C'est interdit : ni viande ni poisson, ni utilisé ni manquant. "
+                    "Refais la recette avec uniquement des ingrédients végétariens "
+                    "(légumes, œufs, produits laitiers, légumineuses, céréales)."
                 )
                 continue
         if sans_courses:

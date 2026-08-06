@@ -136,4 +136,6 @@ Zone congélateur, « je n'ai pas ça », relooking, stockage Redis atomique, 36
 ## V1 (2026-08-04)
 Inventaire, recettes DeepSeek, export/import.
 
+- 2026-08-06 22:44 — **Vérification « 🥬 Végétarien » côté serveur (V3.38)** : la contrainte veggie est désormais vérifiée comme les autres (durée max, sans courses, à sauver) — si l'IA glisse une viande ou un poisson (utilisé ou manquant), le serveur le reprend d'un ton ferme et régénère, jusqu'à 3 essais. Détection par mots-clés normalisés (accents, ligatures, « steak de soja »/tofu tolérés, bouillon de volaille toléré comme base du placard). 14 tests unitaires passent. + déploiement Vercel (vérifié :  200,  gourmand répond une recette,  veggie répond sans carné).
+
 - 2026-08-06 22:20 — **Robustesse du chat recette (V3.37)** : `api/chat.py` aligné sur `api/recette.py` — entrée validée (JSON malformé, `messages`/`ingredients`/`recette` mal typés, mode inconnu → **HTTP 400** clair au lieu dun
