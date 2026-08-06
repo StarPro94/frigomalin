@@ -1,6 +1,9 @@
 # CHANGELOG — FrigoMalin
 
-## V3.22 (2026-08-06) — Minuteur au rythme de la recette ⏲️
+## V3.23 (2026-08-06) — Étapes de cuisson cochables ✅
+- Dans la fiche recette, chaque **étape** de la recette est désormais **cochable** : un appui la barre (✓) quand elle est faite, un second appui la décoche. Un **compteur de progression** (« 3/7 ») suit votre avancement et un bouton **« ↺ réinitialiser »** remet toutes les cases à zéro. Pratique en cuisine pour ne plus perdre le fil de la recette.
+- 2026-08-06 06:40 — Étapes cochables (checklist + compteur de progression + réinitialisation) + déploiement Vercel.
+
 - Le bouton **« Minuteur »** se cale automatiquement sur la durée de la recette : si le plat annonce « 30 minutes », le bouton affiche « Minuteur 30 min » et le décompte part de 30 min (10 min par défaut si la durée est inconnue). Avant de lancer, on peut ajuster de **+5 / −5 min** en un appui. Quand c'est fini, « Terminé ! » s'affiche.
 - 2026-08-06 06:10 — Minuteur réglable calé sur la durée de la recette (label + décompte auto, ajustement ±5 min) + déploiement Vercel.
 

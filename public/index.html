@@ -121,6 +121,14 @@
   .etapes{counter-reset:e;list-style:none;margin-top:6px;}
   .etapes li{counter-increment:e;position:relative;padding:11px 0 11px 36px;border-bottom:1px dashed var(--ligne);font-size:15px;}
   .etapes li::before{content:counter(e);position:absolute;left:0;top:11px;font-family:"Barlow Condensed";font-weight:800;font-size:20px;color:var(--tomate);}
+  /* étapes cochables (mode cuisine) */
+  .etapes-prog{display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13px;color:var(--encre-douce);}
+  .etapes-prog b{font-family:"Barlow Condensed";font-size:16px;color:var(--persil);}
+  .etapes li{cursor:pointer;user-select:none;transition:opacity .15s;}
+  .etapes li:hover{background:rgba(0,0,0,.035);}
+  .etapes li.done{opacity:.45;}
+  .etapes li.done::before{content:"✓";color:var(--persil);}
+  .etapes li.done .etape-texte{text-decoration:line-through;}
   .barre-action{position:sticky;bottom:0;display:flex;gap:8px;margin-top:18px;padding-top:12px;border-top:2px solid var(--encre);background:var(--papier);flex-wrap:wrap;}
   .barre-action .btn{flex:1;min-width:110px;}
   /* ---- chat recette ---- */
@@ -547,7 +555,8 @@ function ouvreFiche(r){
       <div class="col"><h5 class="av">On a déjà</h5><ul>${(r.ingredients_dispo_utilises||[]).map(x=>`<li>${esc(x)}</li>`).join("")||"<li style='border:none;font-style:italic;color:var(--encre-douce);'>—</li>"}</ul></div>
       <div class="col"><h5 class="manq">Il manque</h5>${manqHtml}</div>
     </div>
-    <ol class="etapes">${(r.etapes||[]).map(x=>`<li>${esc(x)}</li>`).join("")}</ol>
+    <ol class="etapes" id="etapesList">${(r.etapes||[]).map(x=>`<li title="Cocher / décocher"><span class="etape-texte">${esc(x)}</span></li>`).join("")}</ol>
+    ${(r.etapes&&r.etapes.length)?`<div class="etapes-prog" id="etapesProg"><span>Progression :</span><b id="etapesCompte">0/${r.etapes.length}</b><button class="btn-lien" id="etapesReset" style="margin-left:auto;">↺ réinitialiser</button></div>`:""}
     ${r.astuce?`<div style="margin-top:10px;font-style:italic;color:var(--encre-douce);">${esc(r.astuce)}</div>`:""}
     <div class="chat-box" id="chatBox">
       <div class="chat-msgs" id="chatMsgs"><div class="chat-msg chef">Un souci dans la recette ? Dis-le-moi, je l'adapte.</div></div>
@@ -587,6 +596,15 @@ function ouvreFiche(r){
       }else{alert("Impossible d'ajouter aux réserves.");}
     });
   });
+  // Étapes de cuisson cochables : on coche au fur et à mesure + compteur + réinitialisation
+  const elEtapes=f.querySelectorAll("#etapesList li"),elCompte=$("etapesCompte"),elReset=$("etapesReset");
+  function majEtapesProg(){
+    const done=f.querySelectorAll("#etapesList li.done").length;
+    if(elCompte)elCompte.textContent=done+"/"+elEtapes.length;
+    if(elReset&&done>0)elReset.style.color="var(--persil)";
+  }
+  elEtapes.forEach(li=>li.addEventListener("click",()=>{li.classList.toggle("done");majEtapesProg();}));
+  if(elReset)elReset.addEventListener("click",()=>{elEtapes.forEach(li=>li.classList.remove("done"));majEtapesProg();});
   f.classList.add("open");$("overlay").classList.add("show");
 }
 function changePartsRefresh(r){$("partsV").textContent=r.parts;const f=$("fiche");/* re-affiche les meta % non réutilisable facilement ici → fait simple */ }
