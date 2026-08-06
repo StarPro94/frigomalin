@@ -146,6 +146,8 @@
   .timer button{font-family:"Barlow Condensed";text-transform:uppercase;border:1px solid var(--papier-clair);background:none;color:var(--papier-clair);padding:6px 12px;margin-top:8px;border-radius:2px;cursor:pointer;}
   .timer .timer-adjs{display:inline-flex;gap:6px;margin-bottom:6px;}
   .timer .timer-adjs button{margin-top:0;padding:2px 10px;opacity:.85;}
+  .timer.alarme{animation:alarmePulse .5s ease-in-out 4;}
+  @keyframes alarmePulse{0%,100%{background:var(--ardoise);}50%{background:var(--tomate);}}
   /* ---- bottom nav ---- */
   .bottomnav{position:fixed;bottom:0;left:0;right:0;background:var(--persil);display:flex;z-index:30;padding-bottom:env(safe-area-inset-bottom);}
   .bottomnav button{flex:1;border:none;background:none;color:var(--persil-clair);padding:11px 2px 9px;cursor:pointer;position:relative;font-family:"Barlow Condensed";font-size:12px;text-transform:uppercase;letter-spacing:.06em;display:flex;flex-direction:column;align-items:center;gap:3px;}
@@ -644,7 +646,7 @@ function demarrerMinuteur(recette){
   const fmt=()=>{const m=String(Math.floor(Math.max(0,s)/60)).padStart(2,"0"),ss=String(Math.max(0,s)%60).padStart(2,"0");return m+":"+ss;};
   function render(){
     const running=appState.timer;
-    slot.innerHTML=`<div class="timer">
+    slot.innerHTML=`<div class="timer${s>0?'':' alarme'}">
       <div class="lab">Minuteur</div>
       ${running?'':`<span class="timer-adjs"><button id="tMoins" title="−5 min">−5</button><button id="tPlus" title="+5 min">+5</button></span>`}
       <div class="grand">${s>0?fmt():"Terminé !"}</div>
@@ -656,7 +658,28 @@ function demarrerMinuteur(recette){
     const stop=$("btnStopT");if(stop)stop.addEventListener("click",()=>{clearInterval(appState.timer);appState.timer=null;render();});
     const lancer=$("btnLancer");if(lancer)lancer.addEventListener("click",()=>{s=Math.max(1,Math.round(s));appState.timer=setInterval(tick,1000);render();});
   }
-  function tick(){s--;if(s<=0){clearInterval(appState.timer);appState.timer=null;render();return;}const g=slot.querySelector(".grand");if(g)g.textContent=fmt();}
+  function sonner(){
+    // vibration mobile — impossible de rater la fin du décompte
+    try{if(navigator.vibrate)navigator.vibrate([500,250,500,250,900]);}catch(e){}
+    // 3 bips (WebAudio, aucun fichier son à charger)
+    try{
+      const AC=window.AudioContext||window.webkitAudioContext;
+      if(!AC)return;
+      const ctx=appState._audioCtx||(appState._audioCtx=new AC());
+      if(ctx.state==="suspended")ctx.resume();
+      [[880,0],[880,.22],[1175,.44]].forEach(([f,t])=>{
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.type="sine";o.frequency.value=f;
+        o.connect(g);g.connect(ctx.destination);
+        const st=ctx.currentTime+t;
+        g.gain.setValueAtTime(0.0001,st);
+        g.gain.exponentialRampToValueAtTime(0.5,st+0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001,st+0.18);
+        o.start(st);o.stop(st+0.2);
+      });
+    }catch(e){}
+  }
+  function tick(){s--;if(s<=0){clearInterval(appState.timer);appState.timer=null;render();sonner();return;}const g=slot.querySelector(".grand");if(g)g.textContent=fmt();}
   if(appState.timer){clearInterval(appState.timer);appState.timer=null;}
   render();
 }

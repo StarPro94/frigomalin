@@ -1,5 +1,9 @@
 # CHANGELOG — FrigoMalin
 
+## V3.24 (2026-08-06) — Minuteur qui sonne 🔔
+- À la fin du décompte, le minuteur **sonne et vibre** : 3 bips (WebAudio, aucun fichier à charger) + vibration sur mobile, et le bloc passe en pulsation rouge « Terminé ! » — impossible de rater la fin de cuisson, même téléphone en poche.
+- 2026-08-06 09:35 — Alarme sonore + vibration + pulsation visuelle en fin de minuteur, déploiement Vercel.
+
 ## V3.23 (2026-08-06) — Étapes de cuisson cochables ✅
 - Dans la fiche recette, chaque **étape** de la recette est désormais **cochable** : un appui la barre (✓) quand elle est faite, un second appui la décoche. Un **compteur de progression** (« 3/7 ») suit votre avancement et un bouton **« ↺ réinitialiser »** remet toutes les cases à zéro. Pratique en cuisine pour ne plus perdre le fil de la recette.
 - 2026-08-06 06:40 — Étapes cochables (checklist + compteur de progression + réinitialisation) + déploiement Vercel.

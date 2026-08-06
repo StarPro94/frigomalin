@@ -66,5 +66,6 @@ frigo-malin/
 - [x] **Mode « Sans courses »** — V3.21 : toggle « 🚫 Sans courses » dans « Changer l'envie » → recette composée uniquement avec ce qu'on a (liste « Il manque » vide, seuls sel/poivre/huile/épices tolérés), vérifié et régénéré côté serveur si l'IA propose un achat, choix mémorisé
 - [x] **Minuteur au rythme de la recette** — V3.22 : le bouton « Minuteur » se cale sur la durée annoncée par le plat (« Minuteur 30 min », décompte qui part de 30 min, 10 min par défaut) et se règle de +5/−5 min avant de lancer
 - [x] **Étapes de cuisson cochables** — V3.23 : chaque étape de la recette se coche d'un appui (✓ barré), avec un compteur de progression (« 3/7 ») et un bouton « ↺ réinitialiser » — ne plus perdre le fil en cuisine
+- [x] **Minuteur qui sonne** — V3.24 : à la fin du décompte, 3 bips (WebAudio) + vibration mobile + pulsation rouge « Terminé ! » — impossible de rater la fin de cuisson
 
 _Le projet évolue automatiquement (cron d'amélioration continue)._
