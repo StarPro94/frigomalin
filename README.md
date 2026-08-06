@@ -69,5 +69,6 @@ frigo-malin/
 - [x] **Minuteur qui sonne** — V3.24 : à la fin du décompte, 3 bips (WebAudio) + vibration mobile + pulsation rouge « Terminé ! » — impossible de rater la fin de cuisson
 - [x] **Recette robuste face aux réponses IA** — V3.25 : le serveur réassainit chaque recette avant l'écran (étapes/listes toujours en liste, `parts` bornées 1-24, difficulté harmonisée) — la fiche ne casse plus si le modèle dévie du format
 - [x] **Mode « Végétarien »** — V3.26 : contrainte « 🥬 Végétarien » dans « Changer l'envie » → le chef compose sans viande ni poisson (ni en ingrédient utilisé ni en manquant), pour les soirs où on veut un repas sans carné
+- [x] **Envie de cuisine mémorisée par profil** — V3.27 : Patrick et Emeline ont chacun leur propre « Changer l'envie » (mode, durée max, difficulté, parts par défaut) — retrouvés automatiquement à chaque changement de profil et à la prochaine visite
 
 _Le projet évolue automatiquement (cron d'amélioration continue)._
