@@ -97,6 +97,10 @@
   .ligne-res{border-bottom:1px dashed var(--ligne);padding:10px 2px;display:flex;align-items:center;gap:8px;}
   .ligne-res:last-child{border-bottom:none;}
   .ligne-res .n{flex:1;font-size:15px;display:flex;align-items:center;gap:8px;}
+  .ligne-res.prio{background:linear-gradient(90deg,rgba(210,164,59,.14),transparent 70%);}
+  .ligne-res .etoile{background:none;border:1px solid var(--ligne);border-radius:2px;width:30px;height:30px;font-size:14px;line-height:1;cursor:pointer;color:var(--encre-douce);display:flex;align-items:center;justify-content:center;flex:0 0 30px;}
+  .ligne-res .etoile.on{background:var(--moutarde);border-color:var(--moutarde);color:var(--papier-clair);}
+  .listes li.prio{background:rgba(210,164,59,.14);border-radius:4px;padding-left:6px;}
   .ligne-res .q{color:var(--encre-douce);font-style:italic;font-size:13px;margin-right:6px;}
   .ligne-res .menu-btn{background:none;border:1px solid var(--ligne);border-radius:2px;width:30px;height:30px;font-size:15px;color:var(--encre-douce);cursor:pointer;display:flex;align-items:center;justify-content:center;}
   .grand-btn{font-family:"Barlow Condensed";text-transform:uppercase;letter-spacing:.06em;font-weight:700;border:1px solid var(--encre);border-radius:2px;padding:12px;width:100%;font-size:15px;cursor:pointer;background:var(--papier-clair);color:var(--encre);margin-top:10px;}
@@ -311,7 +315,7 @@
 
 <script>
 // ---------- État ----------
-const LS_C="office_carnet",LS_U="office_user",LS_T="office_theme",LS_F="office_favoris",LS_SC="office_sanscourses",LS_E="office_envie";
+const LS_C="office_carnet",LS_U="office_user",LS_T="office_theme",LS_F="office_favoris",LS_SC="office_sanscourses",LS_E="office_envie",LS_PRIO="office_prio";
 // « Je n'ai pas ça » : les ingrédients qu'on veut éviter pour ce soir, mémorisés sur le téléphone.
 const LS_EXCL="office_exclusions";
 // Préférences de cuisine mémorisées PAR PROFIL : Patrick et Emeline retrouvent
@@ -322,7 +326,7 @@ function saveEnvie(){let all={};try{all=JSON.parse(localStorage.getItem(LS_E)||"
 const _envie0=loadEnvie(localStorage.getItem(LS_U)||"patrick");
 const appState={view:"today",user:localStorage.getItem(LS_U)||"patrick",theme:localStorage.getItem(LS_T)==="night"?"night":"day",inventory:[],zone:"frigo",filtre:"tous",
   mode:_envie0.mode,duree_max:_envie0.duree_max,difficulte_max:_envie0.difficulte_max,parts:_envie0.parts,excl:exclInit(),eviterPlats:[],sansCourses:localStorage.getItem(LS_SC)==="1",
-  suggestion:null,carnet:JSON.parse(localStorage.getItem(LS_C)||"[]"),favoris:JSON.parse(localStorage.getItem(LS_F)||"[]"),favOnly:false,timer:null,recogOn:null,chatMsgs:[],_recetteChat:null,carnetQ:"",
+  suggestion:null,carnet:JSON.parse(localStorage.getItem(LS_C)||"[]"),favoris:JSON.parse(localStorage.getItem(LS_F)||"[]"),favOnly:false,timer:null,recogOn:null,chatMsgs:[],_recetteChat:null,carnetQ:"",prio:JSON.parse(localStorage.getItem(LS_PRIO)||"[]"),
   bases:[
     "sel","poivre","huile d'olive","beurre","ail","oignon","échalote","vinaigre","moutarde","sauce soja","sucre","farine","bouillon de légumes","bouillon de volaille",
     "paprika","cumin","curry","curcuma","coriandre","herbes de provence","thym","romarin","origan","basilic séché","laurier","piment","cannelle","muscade",
@@ -341,6 +345,24 @@ function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&l
 function norm(s){return String(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/œ/g,"oe").replace(/æ/g,"ae").replace(/[^a-z0-9 ]/g,"").trim();}
 function saveUser(){localStorage.setItem(LS_U,appState.user);}
 function saveCarnet(){localStorage.setItem(LS_C,JSON.stringify(appState.carnet));}
+// « À sauver » : les ingrédients en priorité (périmés / à consommer / à finir),
+// mémorisés sur le téléphone pour que le chef compose le plat autour d'eux.
+function savePrio(){localStorage.setItem(LS_PRIO,JSON.stringify(appState.prio));}
+function prioMaj(){
+  const fin=peremptionStat.bind(null),low=/fond|vide|peu|entam|½/i;
+  return appState.inventory.filter(i=>fin(i)==="expire"||fin(i)==="vite"||low.test(i.quantite||"")).map(i=>i.nom);
+}
+function togglePrio(nom){
+  const i=appState.prio.findIndex(x=>norm(x)===norm(nom));
+  if(i>-1)appState.prio.splice(i,1);else appState.prio.push(nom);
+  savePrio();
+  const f=$("fiche");if(f){
+    f.querySelectorAll("[data-prio]").forEach(li=>li.classList.toggle("prio",estPrio(li.dataset.prio)));
+    const b=$("btnPrio");if(b)b.innerHTML=estPrio(nom)?"✔️ Il est prioritaire":"⭐ À sauver d'abord";
+  }
+  renderToday();
+}
+function estPrio(nom){return appState.prio.some(x=>norm(x)===norm(nom));}
 
 // ---------- Navigation / user / theme ----------
 function navigate(v){
@@ -364,11 +386,20 @@ function syncUI(){const b=$("syncRailBox");b.textContent=navigator.onLine?"· à
 // ---------- Inventaire ----------
 async function refresh(){
   if(_mutex)return;
-  try{const d=await api("/api/inventaire");appState.inventory=d.ingredients||[];renderReserves();renderToday();syncUI();}
+  try{const d=await api("/api/inventaire");appState.inventory=d.ingredients||[];
+    // « À sauver » : on purge les priorités d'ingrédients qui n'existent plus dans
+    // les réserves (mangés ou jetés) — inutile de demander au chef l'impossible.
+    if(appState.prio.length){
+      const noms=appState.inventory.map(i=>norm(i.nom));
+      const avant=appState.prio.length;
+      appState.prio=appState.prio.filter(p=>noms.includes(norm(p)));
+      if(appState.prio.length!==avant)savePrio();
+    }
+    renderReserves();renderToday();syncUI();}
   catch(e){syncUI();}
 }
 async function apiAjouter(nom,qte,zone,per){_mutex=true;try{const d=await api("/api/inventaire",j({action:"ajouter",nom,quantite:qte,zone,date_peremption:per||null}));appState.inventory=d.ingredients||[];return true;}catch(e){return false;}finally{_mutex=false;syncUI();renderReserves();renderToday();}}
-async function apiSupprimer(nom){_mutex=true;try{const d=await api("/api/inventaire",j({action:"supprimer",nom}));appState.inventory=d.ingredients||[];}catch(e){}finally{_mutex=false;syncUI();renderReserves();renderToday();}}
+async function apiSupprimer(nom){_mutex=true;try{const d=await api("/api/inventaire",j({action:"supprimer",nom}));appState.inventory=d.ingredients||[];}catch(e){}finally{_mutex=false;syncUI();renderReserves();renderToday();if(appState.prio.some(x=>norm(x)===norm(nom))){appState.prio=appState.prio.filter(x=>norm(x)!==norm(nom));savePrio();}}}
 async function viderPerimes(){
   const perimes=appState.inventory.filter(i=>peremptionStat(i)==="expire");
   if(!perimes.length)return;
@@ -403,22 +434,29 @@ function urgenceFin(i){
 function renderToday(){
   $("todaySalut").textContent=appState.user==="patrick"?"Bonsoir Patrick.":"Bonsoir Emeline.";
   const box=$("aSauver");box.innerHTML="";
-  const low=/fond|vide|peu|entam|½/i;
-  const vides=appState.inventory.filter(i=>low.test(i.quantite||""));
-  const urgence=appState.inventory.filter(i=>peremptionStat(i));
-  const bloqueExpire=urgence.filter(i=>peremptionStat(i)==="expire");
-  if(bloqueExpire.length){
-    const li=document.createElement("li");li.innerHTML=`<span>⚠️ ${esc(bloqueExpire.slice(0,2).map(i=>i.nom).join(", "))}${bloqueExpire.length>2?"…":""} périmé${bloqueExpire.length>1?"s":""}</span><span class="tag per-expire">à jeter</span>`;
-    box.appendChild(li);
+  // « À sauver d'abord » : liste en priorité (périmés / à consommer / à finir),
+  // mémorisée pour que le chef compose le plat autour de ces ingrédients.
+  const auto=prioMaj();
+  const liste=appState.prio.length?appState.prio:auto;
+  if(liste.length){
+    liste.slice(0,3).forEach(nom=>{
+      const ing=appState.inventory.find(i=>norm(i.nom)===norm(nom));
+      const li=document.createElement("li");
+      li.innerHTML=`<span>${esc(nom)}</span><span class="tag">${estPrio(nom)?"à sauver":(peremptionStat(ing)==="expire"?"périmé":"à finir")}</span>`;
+      box.appendChild(li);
+    });
+  }else{
+    box.innerHTML='<li style="border:none;font-style:italic;">Rien d\'urgent. On est tranquilles.</li>';
   }
-  if(vides.length){vides.slice(0,3).sort((a,b)=>urgenceFin(b)-urgenceFin(a)).forEach(i=>{const li=document.createElement("li");li.innerHTML=`<span>${esc(i.nom)}</span><span class="tag">à finir</span>`;box.appendChild(li);});}
-  else if(!bloqueExpire.length){box.innerHTML='<li style="border:none;font-style:italic;">Rien d\'urgent. On est tranquilles.</li>';}
 }
 async function generer(){
   $("platTitre").textContent="Je regarde ce qu'il reste…";$("platMetas").innerHTML="";$("platJustif").textContent="";
   const ingredients=[...appState.inventory.map(i=>i.nom)];
+  // Priorité du soir : les ingrédients marqués « ⭐ à sauver » (périmés / à consommer / à finir),
+  // que le chef doit ABSOLUMENT intégrer au plat proposé.
+  const prioriser=appState.prio.length?appState.prio.slice():prioMaj();
   try{
-    const d=await api("/api/recette",j({mode:appState.mode,duree_max:appState.duree_max,difficulte_max:appState.difficulte_max,parts:appState.parts,ingredients,bases:appState.basesOn,exclusions:appState.excl,eviter_plats:appState.eviterPlats,sans_courses:appState.sansCourses}));
+    const d=await api("/api/recette",j({mode:appState.mode,duree_max:appState.duree_max,difficulte_max:appState.difficulte_max,parts:appState.parts,ingredients,bases:appState.basesOn,exclusions:appState.excl,eviter_plats:appState.eviterPlats,sans_courses:appState.sansCourses,prioriser}));
     const r=d.recette||d;appState.suggestion=r;
     $("platTitre").textContent=r.titre||"Une idée";
     $("platMetas").innerHTML=(r.temps?`<span>${esc(r.temps)}</span>`:"")+(r.difficulte?`<span>${esc(r.difficulte)}</span>`:"")+(r.parts?`<span>${esc(r.parts)} pers.</span>`:"")+(r.calories_estimees?`<span>${esc(r.calories_estimees)}</span>`:"");
@@ -501,14 +539,17 @@ function renderReserves(){
     items.sort((a,b)=>a.nom.localeCompare(b.nom,"fr"));
   }
   items.forEach(i=>{
-    const li=document.createElement("div");li.className="ligne-res";
+    const li=document.createElement("div");li.className="ligne-res"+(estPrio(i.nom)?" prio":"");
     const nb=document.createElement("span");nb.className="n";nb.textContent=i.nom;
     const qb=document.createElement("span");qb.className="q";qb.textContent=i.quantite||"";
+    const et=document.createElement("button");et.className="etoile"+(estPrio(i.nom)?" on":"");
+    et.textContent="⭐";et.title=estPrio(i.nom)?"Prioritaire à sauver (appui pour enlever)":"À sauver d'abord (appui pour prioriser)";
+    et.addEventListener("click",e=>{e.stopPropagation();togglePrio(i.nom);});
     const mb=document.createElement("button");mb.className="menu-btn";mb.textContent="⋯";
     mb.addEventListener("click",e=>{e.stopPropagation();ouvreMenuIng(e,i);});
     li.appendChild(nb);if(i.quantite)li.appendChild(qb);
     const ps=peremptionStat(i);if(ps){const bd=document.createElement("span");bd.className="tag per-"+ps;bd.textContent=perLabel(ps);li.appendChild(bd);}
-    li.appendChild(mb);
+    li.appendChild(et);li.appendChild(mb);
     box.appendChild(li);
   });
 }
@@ -621,6 +662,7 @@ function renderNous(){
   const box=$("bases");box.innerHTML="";
   appState.bases.forEach(b=>{const btn=document.createElement("button");btn.className="base"+(appState.basesOn.includes(b)?" on":"");btn.textContent=b;
     btn.addEventListener("click",()=>{const i=appState.basesOn.indexOf(b);if(i>-1)appState.basesOn.splice(i,1);else appState.basesOn.push(b);renderNous();});box.appendChild(btn);});
+  const t=$("aSauverTitre");if(t)t.textContent=appState.prio.length?"⭐ À sauver d'abord (choisi)":"À sauver d'abord";
 }
 // ---------- Fiche recette ----------
 function ouvreFiche(r){
@@ -638,9 +680,10 @@ function ouvreFiche(r){
       <button class="chip" id="partsMoins">−</button><b id="partsV" style="font-family:'Barlow Condensed';font-size:18px;">${r.parts||2}</b><button class="chip" id="partsPlus">+</button>
     </div>
     <div class="listes">
-      <div class="col"><h5 class="av">On a déjà</h5><ul>${(r.ingredients_dispo_utilises||[]).map(x=>`<li>${esc(x)}</li>`).join("")||"<li style='border:none;font-style:italic;color:var(--encre-douce);'>—</li>"}</ul></div>
+      <div class="col"><h5 class="av">On a déjà</h5><ul>${(r.ingredients_dispo_utilises||[]).map(x=>`<li data-prio="${esc(x)}" class="${estPrio(x)?"prio":""}">${estPrio(x)?"⭐ ":""}${esc(x)}</li>`).join("")||"<li style='border:none;font-style:italic;color:var(--encre-douce);'>—</li>"}</ul></div>
       <div class="col"><h5 class="manq">Il manque</h5>${manqHtml}</div>
     </div>
+    <div style="margin:2px 0 8px;"><button class="btn-lien" id="btnPrio" style="color:var(--persil);">${estPrio((r.ingredients_dispo_utilises||[])[0]||"")?"✔️ Il est prioritaire":"⭐ À sauver d'abord"}</button></div>
     ${!appState.sansCourses&&manq.length?`<button class="btn btn-ligne" id="btnExclure" style="width:100%;margin-bottom:2px;">🚫 Je n'ai pas ça</button>`:""}${appState.excl.length?`<div class="excl-box" id="exclBox"><span class="excl-titre">🚫 À éviter pour ce soir</span>${appState.excl.map(x=>`<button class="chip excl-chip" data-unexcl="${esc(x)}">${esc(x)} ✕</button>`).join("")}</div>`:""}
     <ol class="etapes" id="etapesList">${(r.etapes||[]).map(x=>`<li title="Cocher / décocher"><span class="etape-texte">${esc(x)}</span></li>`).join("")}</ol>
     ${(r.etapes&&r.etapes.length)?`<div class="etapes-prog" id="etapesProg"><span>Progression :</span><b id="etapesCompte">0/${r.etapes.length}</b><button class="btn-lien" id="etapesReset" style="margin-left:auto;">↺ réinitialiser</button></div>`:""}
@@ -669,6 +712,7 @@ function ouvreFiche(r){
   const bc=$("btnCourses");if(bc)bc.addEventListener("click",()=>listeCourses(r));
   // « Je n'ai pas ça » : exclut le 1er manquant (et l'enlève du mode « sans courses »)
   const bExcl=$("btnExclure");if(bExcl)bExcl.addEventListener("click",()=>{const m=(r.ingredients_manquants||[])[0];if(m)toggleExcl(m);});
+  const bPrio=$("btnPrio");if(bPrio)bPrio.addEventListener("click",()=>{const p=(r.ingredients_dispo_utilises||[])[0];if(p)togglePrio(p);});
   f.querySelectorAll("[data-unexcl]").forEach(bn=>bn.addEventListener("click",()=>toggleExcl(bn.dataset.unexcl)));
   // « C'est à la maison » : un simple + sur un manquant l'ajoute aux réserves (frigo)
   f.querySelectorAll(".btn-add-manq").forEach(btn=>{

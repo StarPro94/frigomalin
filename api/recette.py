@@ -107,7 +107,7 @@ def _valider_entree(body):
             "Mode inconnu : %r. Modes possibles : %s."
             % (mode, ", ".join(sorted(MODES)))
         )
-    for champ in ("ingredients", "bases", "exclusions", "messages", "eviter_plats"):
+    for champ in ("ingredients", "bases", "exclusions", "messages", "eviter_plats", "prioriser"):
         v = body.get(champ)
         if v is not None and not isinstance(v, list):
             raise BadRequest("Le champ '%s' doit être une liste." % champ)
@@ -279,12 +279,23 @@ BASES_TOLEREES = (
 )
 
 
+def norm_alim(s):
+    """Normalise un nom d'ingrédient pour la comparaison (accent, casse,
+    ligatures et quantités retirés) : « 200g de Riz » ≈ « riz »."""
+    t = str(s or "").lower()
+    t = t.replace("œ", "oe").replace("æ", "ae")
+    t = "".join(c for c in t if c.isalnum() or c.isspace())
+    t = t.replace("de ", " ").replace("d'", " ").replace("des ", " ")
+    t = re.sub(r"^\d+(?:[.,]\d+)?\s*(?:g|kg|cl|l|ml|dl|gr|litre|litres)?\s*", "", t).strip()
+    return " ".join(t.split())
+
+
 def est_assaisonnement(m):
     mm = str(m or "").lower().strip()
     return any(k in mm for k in BASES_TOLEREES)
 
 
-def build_generate_prompt(ingredients, bases, exclusions, mode, duree_max, difficulte_max, parts, eviter_plats=None, sans_courses=False):
+def build_generate_prompt(ingredients, bases, exclusions, mode, duree_max, difficulte_max, parts, eviter_plats=None, sans_courses=False, prioriser=None):
     dispo = ", ".join(ingredients) if ingredients else "AUCUN renseigné"
     tout = ", ".join(bases) if bases else ""
     excl = ""
@@ -295,6 +306,11 @@ def build_generate_prompt(ingredients, bases, exclusions, mode, duree_max, diffi
     if eviter_plats:
         evite = (f"\nIMPORTANT : ne propose SURTOUT PAS ces plats (déjà proposés tout à l'heure, on n'en veut pas) : "
                  f"{', '.join(eviter_plats)}. Trouve une idée vraiment différente.")
+    prior = ""
+    if prioriser:
+        prior = (f"\nIMPORTANT : on veut ABSOLUMENT utiliser en priorité : {', '.join(prioriser)}. "
+                 f"Compose le plat AUTOUR de ces ingrédients, en les mettant en valeur. "
+                 f"Chacun d'eux doit apparaître dans 'ingredients_dispo_utilises'.")
     sc = ""
     if sans_courses:
         sc = ("\nIMPORTANT : mode SANS COURSES — utilise UNIQUEMENT les ingrédients disponibles, "
@@ -305,7 +321,7 @@ def build_generate_prompt(ingredients, bases, exclusions, mode, duree_max, diffi
     c = build_constraints(mode, duree_max, difficulte_max, parts)
     return f"""
 Contexte : je cuisine pour ma famille avec ce que j'ai.
-Ingrédients disponibles : {dispo}.{bases_s}{excl}{evite}{sc}
+Ingrédients disponibles : {dispo}.{bases_s}{excl}{evite}{prior}{sc}
 
 Contraintes (à respecter IMPÉRATIVEMENT) : {c}
 
@@ -326,13 +342,28 @@ def generate(body):
     parts = body.get("parts")
     parts = int(parts) if isinstance(parts, (int, float)) and parts > 0 else 2
     sans_courses = body.get("sans_courses") is True
+    prioriser = [str(i).strip() for i in body.get("prioriser", []) if str(i).strip()]
 
     # on essaie jusqu'à 3 fois, en durcissant la consigne durée si dépassé
     deadline = time.time() + GLOBAL_TIMEOUT
-    prompt = build_generate_prompt(ingredients, bases, exclusions, mode, duree_max, difficulte_max, parts, eviter_plats, sans_courses)
+    prompt = build_generate_prompt(ingredients, bases, exclusions, mode, duree_max, difficulte_max, parts, eviter_plats, sans_courses, prioriser)
     for attempt in range(3):
         raw = _call(prompt, deadline=deadline)
         r = normalize_recette(parse_recette(raw))
+        # Priorité : chaque ingrédient « à sauver » doit être dans le plat.
+        # Si l'IA n'a pas tenu compte, on insiste d'un ton ferme et on régénère.
+        if prioriser:
+            dispo_norm = set(norm_alim(x) for x in (r.get("ingredients_dispo_utilises") or []))
+            manquants_norm = set(norm_alim(x) for x in (r.get("ingredients_manquants") or []))
+            ignores = [p for p in prioriser if norm_alim(p) not in dispo_norm and norm_alim(p) not in manquants_norm]
+            if ignores:
+                prompt = prompt + (
+                    "\n\nATTENTION : tu n'as PAS utilisé ce qu'on veut sauver : "
+                    + ", ".join(ignores)
+                    + ". Refais la recette AUTOUR de ces ingrédients : ils doivent figurer "
+                    "dans 'ingredients_dispo_utilises' (adaptés, par ex. '200g de riz')."
+                )
+                continue
         if duree_max:
             mn = minutes_from(r.get("temps"))
             if mn is not None and mn > duree_max:

@@ -1,4 +1,5 @@
-# CHANGELOG — FrigoMalin
+## V3.33 (2026-08-06) — « ⭐ À sauver d'abord » : le chef compose le plat autour de ce qui presse 🧺
+- 2026-08-06 12:42 — Nouveau : marquer un ingrédient « ⭐ à sauver » directement dans les réserves (étoile sur chaque ligne) ou depuis la fiche recette (« ⭐ À sauver d'abord »). Le serveur reçoit la liste `prioriser` et impose au chef d'utiliser ces ingrédients (consigne stricte dans le prompt + **vérification** : si un prioritaire n'apparaît ni dans le dispo ni dans les manquants, il est repris et la recette est régénérée, jusqu'à 3 essais). La liste « À sauver d'abord » sur Ce soir affiche les priorités choisies (ou les urgences auto périmés/à finir) ; les priorités sont mémorisées et purgées quand l'ingrédient disparaît des réserves. + déploiement Vercel.
 
 ## V3.32 (2026-08-06) — Robustesse serveur & PWA en nuit 🛠️
 - 2026-08-06 12:37 — `api/recette.py` : la garde « impossible de générer une recette valide » est désormais atteignable (elle était placée après un `return`, donc jamais levée) → après 3 essais infructueux, le serveur répond une vraie erreur 500 explicite au lieu de renvoyer `None` ; barre d'outils de la fiche recette en mode nuit (fond sombre, pas de bloc clair) ; PWA : `theme-color` suit le thème (jour ☀ / nuit ☾) et le cache du service worker est rafraîchi (v2). + déploiement Vercel.

@@ -75,5 +75,6 @@ frigo-malin/
 - [x] **Nettoyage serveur** — V3.30 : code mort retiré dans `api/recette.py` (levée d'erreur jamais atteignable après `return`), flux de génération plus lisible — aucun changement de comportement
 - [x] **« À finir » trié par urgence** — V3.31 : dans les réserves, le filtre « À finir » (et « À sauver d'abord » sur Ce soir) classe ce qui presse en premier — vide/fini > fond/½ > peu > entamé — au lieu de l'ordre alphabétique ; on voit tout de suite quoi finir dans l'assiette
 - [x] **Robustesse serveur & PWA en nuit** — V3.32 : garde « recette valide » réellement levée après 3 essais (erreur 500 explicite au lieu d'un `None` silencieux), barre d'outils de la fiche lisible en mode nuit, `theme-color` PWA qui suit le thème jour/nuit, cache du service worker rafraîchi (v2)
+- [x] **« ⭐ À sauver d'abord » : le plat tourne autour de ce qui presse** — V3.33 : une ⭐ sur chaque ingrédient des réserves (ou « ⭐ À sauver d'abord » dans la fiche) le met en priorité → le serveur reçoit `prioriser` et le chef DOIT composer avec (consigne stricte + vérification : prioritaire absent de la recette → régénération, ×3 max) ; la liste « À sauver d'abord » sur Ce soir montre les choix (ou les urgences auto : périmés / à finir), mémorisés et purgés si l'ingrédient disparaît
 
 _Le projet évolue automatiquement (cron d'amélioration continue)._
