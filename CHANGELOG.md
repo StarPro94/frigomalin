@@ -1,5 +1,9 @@
 # CHANGELOG — FrigoMalin
 
+## V3.16 (2026-08-06) — Budget temporel serveur ⏱️
+- Backend : l'appel DeepSeek est désormais borné dans le temps (timeout par tentative réduit à 40 s, budget global de 48 s pour l'ensemble génération + retry). Fini la fonction tuée silencieusement par la limite Vercel en plein milieu : si le temps manque, on répond une **HTTP 504** claire (« Réessaie ») au lieu d'un échec muet. On arrête tôt les nouvelles tentatives quand le budget est épuisé.
+- 2026-08-06 00:40 — Budget temporel global (timeout 40 s/tentative, 48 s au total, 504 propre) + déploiement Vercel.
+
 ## V3.15 (2026-08-05) — Partager une recette ↗
 - Dans la fiche recette, nouveau bouton **« ↗ Partager »** : sur mobile, ouvre le menu de partage natif (messages, mail, etc.) ; sur ordinateur (ou si partage natif indisponible), copie la recette en texte dans le presse-papiers — titre, style, durées, ingrédients dispo/manquants, étapes et astuce, avec l'entête « proposé par FrigoMalin ». Pratique pour envoyer le menu du soir à l'autre.
 - 2026-08-05 22:28 — Bouton Partager (partage natif mobile + copie presse-papiers en secours) + déploiement Vercel.

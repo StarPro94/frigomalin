@@ -58,5 +58,6 @@ frigo-malin/
 - [x] **Validation d'entrée & erreurs HTTP propres** — V3.13 : mode inconnu, JSON malformé ou champ mal typé → réponse **HTTP 400** claire avant d'appeler DeepSeek (plus d'erreur avalée ni d'appel IA gaspillé)
 - [x] **Ajout d'un manquant en un geste (＋)** — V3.14 : dans la fiche recette, un appui sur le ＋ d'un « Il manque » l'ajoute directement aux réserves (frigo), sans doublon
 - [x] **Partager une recette (↗)** — V3.15 : bouton dans la fiche → partage natif mobile ou copie de la recette (titre, ingrédients, étapes, astuce) dans le presse-papiers, pour envoyer le menu du soir
+- [x] **Budget temporel serveur** — V3.16 : appel DeepSeek borné dans le temps (40 s/tentative, 48 s au total), arrêt anticipé des retry, et **HTTP 504** claire au lieu d'une fonction tuée par la limite Vercel en plein milieu d'une génération
 
 _Le projet évolue automatiquement (cron d'amélioration continue)._

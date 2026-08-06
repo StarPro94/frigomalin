@@ -24,6 +24,12 @@ DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
 DEEPSEEK_URL = "https://api.deepseek.com/chat/completions"
 DEEPSEEK_MODEL = "deepseek-chat"
 
+# Budget temporel global : Vercel serverless peut tuer la fonction au-delà de
+# quelques dizaines de secondes (limit GC). On borne l'ensemble génération+retry
+# pour rester sous la limite et rendre une 504 claire au lieu d'un échec muet.
+GLOBAL_TIMEOUT = 48.0
+CALL_TIMEOUT = 40.0
+
 MODES = {
     "healthy": "healthy : léger, équilibré, peu calorique",
     "gourmand": "gourmand : réconfortant, savoureux, généreux",
@@ -108,12 +114,19 @@ def _valider_entree(body):
             raise BadRequest("Le champ '%s' doit être un nombre." % champ)
 
 
-def _call(prompt, temperature=0.8):
+class BudgetDepasse(Exception):
+    """Le budget de temps global est épuisé → réponse HTTP 504 (au lieu d'un échec muet)."""
+
+
+def _call(prompt, temperature=0.8, deadline=None):
     """Appelle DeepSeek avec retry automatique (fiabilité au quotidien).
 
     On retente jusqu'à 3 fois sur les erreurs transitoires : timeout réseau,
     erreur de connexion ou réponses 5xx/429 de l'API — les pannes passagères
     de DeepSeek ne font plus échouer la requête de l'utilisateur.
+
+    `deadline` (epoch, optionnel) borne le temps total : on s'arrête tôt si le
+    budget temporel est épuisé, pour ne pas dépasser la limite Vercel.
     """
     payload = {
         "model": DEEPSEEK_MODEL,
@@ -129,8 +142,10 @@ def _call(prompt, temperature=0.8):
     )
     last = None
     for attempt in range(3):
+        if deadline is not None and time.time() >= deadline:
+            raise BudgetDepasse()
         try:
-            with urllib.request.urlopen(req, timeout=120) as resp:
+            with urllib.request.urlopen(req, timeout=CALL_TIMEOUT) as resp:
                 body = json.loads(resp.read().decode("utf-8"))
             return body["choices"][0]["message"]["content"]
         except urllib.error.HTTPError as e:
@@ -141,8 +156,8 @@ def _call(prompt, temperature=0.8):
         except (urllib.error.URLError, TimeoutError, OSError) as e:
             # erreur transitoire : réseau coupé, timeout, connexion refusée → on retente
             last = e
-        if attempt < 2:
-            time.sleep(1 + attempt)  # backoff court : 1s puis 2s
+        if attempt < 2 and (deadline is None or time.time() < deadline - 2):
+            time.sleep(min(1 + attempt, 2))  # backoff court : 1s puis 2s
     raise last if last else Exception("Échec de l'appel DeepSeek")
 
 
@@ -224,9 +239,10 @@ def generate(body):
     parts = int(parts) if isinstance(parts, (int, float)) and parts > 0 else 2
 
     # on essaie jusqu'à 3 fois, en durcissant la consigne durée si dépassé
+    deadline = time.time() + GLOBAL_TIMEOUT
     prompt = build_generate_prompt(ingredients, bases, exclusions, mode, duree_max, difficulte_max, parts)
     for attempt in range(3):
-        raw = _call(prompt)
+        raw = _call(prompt, deadline=deadline)
         r = parse_recette(raw)
         if duree_max:
             mn = minutes_from(r.get("temps"))
@@ -275,7 +291,7 @@ Le dernier message de l'utilisateur demande une modification de la recette (ingr
 Réponds en JSON avec EXACTEMENT cette structure (pas de markdown) :
 {{{JSON_STRUCT}}}
 """
-    raw = _call(prompt, temperature=0.7)
+    raw = _call(prompt, temperature=0.7, deadline=time.time() + GLOBAL_TIMEOUT)
     r = parse_recette(raw)
     if not r.get("titre"):
         raise ValueError("Réponse malformée")
@@ -316,6 +332,8 @@ class handler(BaseHTTPRequestHandler):
             except Exception:
                 pass
             _send(self, 502, {"error": f"DeepSeek HTTP {e.code}: {detail}"})
+        except BudgetDepasse:
+            _send(self, 504, {"error": "Le temps de génération a dépassé la limite. Réessaie."})
         except Exception as e:
             _send(self, 500, {"error": f"Erreur : {e}"})
 
