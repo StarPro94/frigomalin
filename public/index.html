@@ -776,7 +776,9 @@ function garderAuCarnet(r){
 function recetteMinutes(t){if(!t)return null;const s=String(t).toLowerCase().trim();let hm=/(?:^|\D)(\d{1,2})\s*h\s*(\d{1,2})\s*min(?:utes)?\b/.exec(s)||/(?:^|\D)(\d{1,2})\s*h\s*(\d{1,2})(?![.,\d])/.exec(s);if(hm)return Math.max(1,parseInt(hm[1])*60+parseInt(hm[2]));const h=/(\d+(?:[.,]\d+)?)\s*h/.exec(s);if(h)return Math.max(1,Math.round(parseFloat(h[1].replace(",","."))*60));const m=/(\d+(?:[.,]\d+)?)\s*min/.exec(s);if(m)return Math.max(1,Math.round(parseFloat(m[1].replace(",","."))));return null;}
 function timerLabel(r){const m=recetteMinutes(r&&r.temps);return m?"Minuteur "+m+" min":"Minuteur 10 min";}
 function demarrerMinuteur(recette){
-  const slot=$("timerSlot");let s=recetteMinutes(recette&&recette.temps)||600;
+  const slot=$("timerSlot");
+  // si un minuteur tourne déjà, on reprend le VRAI temps restant (horodatage), sinon la durée de la recette
+  let s=appState.timerFin?Math.max(0,Math.ceil((appState.timerFin-Date.now())/1000)):(recetteMinutes(recette&&recette.temps)||600);
   const fmt=()=>{const m=String(Math.floor(Math.max(0,s)/60)).padStart(2,"0"),ss=String(Math.max(0,s)%60).padStart(2,"0");return m+":"+ss;};
   function render(){
     const running=appState.timer;
@@ -786,11 +788,11 @@ function demarrerMinuteur(recette){
       <div class="grand">${s>0?fmt():"Terminé !"}</div>
       ${running?`<button id="btnStopT">Arrêter</button>`:`<button id="btnLancer">${s===0?"Recommencer":"Lancer"}</button>`}
     </div>`;
-    const plus=$("tPlus"),moins=$("tMoins");
-    if(plus)plus.addEventListener("click",()=>{clearInterval(appState.timer);appState.timer=null;s+=300;render();});
-    if(moins)moins.addEventListener("click",()=>{clearInterval(appState.timer);appState.timer=null;s=Math.max(5,s-300);render();});
-    const stop=$("btnStopT");if(stop)stop.addEventListener("click",()=>{clearInterval(appState.timer);appState.timer=null;render();});
-    const lancer=$("btnLancer");if(lancer)lancer.addEventListener("click",()=>{s=Math.max(1,Math.round(s));appState.timer=setInterval(tick,1000);render();});
+    const tPlus=$("tPlus"),tMoins=$("tMoins");
+    if(tPlus)tPlus.addEventListener("click",()=>{clearInterval(appState.timer);appState.timer=null;appState.timerFin=null;s+=300;render();});
+    if(tMoins)tMoins.addEventListener("click",()=>{clearInterval(appState.timer);appState.timer=null;appState.timerFin=null;s=Math.max(5,s-300);render();});
+    const stop=$("btnStopT");if(stop)stop.addEventListener("click",()=>{clearInterval(appState.timer);appState.timer=null;appState.timerFin=null;render();});
+    const lancer=$("btnLancer");if(lancer)lancer.addEventListener("click",()=>{s=Math.max(1,Math.round(s));appState.timerFin=Date.now()+s*1000;appState.timer=setInterval(tick,500);render();});
   }
   function sonner(){
     // vibration mobile — impossible de rater la fin du décompte
@@ -813,7 +815,17 @@ function demarrerMinuteur(recette){
       });
     }catch(e){}
   }
-  function tick(){s--;if(s<=0){clearInterval(appState.timer);appState.timer=null;render();sonner();return;}const g=slot.querySelector(".grand");if(g)g.textContent=fmt();}
+  // le décompte se cale sur l'horodatage : même si le navigateur ralentit/gèle l'interval
+  // (onglet en arrière-plan, téléphone en poche), le vrai temps restant est recalculé à chaque tick
+  function tick(){
+    if(!appState.timerFin)return;
+    s=Math.max(0,Math.ceil((appState.timerFin-Date.now())/1000));
+    if(s<=0){clearInterval(appState.timer);appState.timer=null;appState.timerFin=null;render();sonner();return;}
+    const g=slot.querySelector(".grand");if(g)g.textContent=fmt();
+  }
+  // au retour sur l'onglet, l'affichage est recalculé immédiatement (rattrapage sans attendre le tick)
+  const onVis=()=>{if(!document.hidden)tick();};
+  document.addEventListener("visibilitychange",onVis);
   if(appState.timer){clearInterval(appState.timer);appState.timer=null;}
   render();
 }
